@@ -1,0 +1,1 @@
+# This file is empty because this is a react application that uses the electron framework, which does not have any python dependencies.
