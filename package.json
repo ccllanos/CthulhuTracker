@@ -1,0 +1,71 @@
+{
+  "name": "react-electron-app",
+  "version": "1.0.0",
+  "description": "A React application with Electron framework",
+  "main": "public/electron.js",
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "electron-is-dev": "^2.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "electron": "^27.0.4",
+    "electron-builder": "^24.9.1",
+    "typescript": "^5.2.2"
+  },
+  "scripts": {
+    "start": "concurrently \"cross-env BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && electron .\"",
+    "react-start": "react-scripts start",
+    "build": "yarn react-build && electron-builder",
+    "react-build": "react-scripts build",
+    "install": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps",
+    "electron-rebuild": "electron-rebuild -f -w sqlite3",
+    "package": "electron-builder --dir",
+    "dist": "electron-builder",
+    "deploy": "yarn build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "build": {
+    "productName": "React Electron App",
+    "appId": "com.example.reactelectronapp",
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
