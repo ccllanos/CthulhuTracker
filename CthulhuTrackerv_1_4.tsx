@@ -866,74 +866,94 @@ const CthulhuTracker = () => {
 
      const handleSkillsPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
         if (!selectedPlayer || !players[selectedPlayer] || players[selectedPlayer].statuses.muerto) return;
-        event.preventDefault(); // Prevenir el pegado por defecto en el textarea
 
-        const pastedText = event.clipboardData.getData('text');
-        const lines = pastedText.trim().split('\n');
-        const potentialSkills: Record<string, number> = {};
-        let parseSuccess = true;
-        let skillsFound = 0;
+        const clipboardData = event.clipboardData;
+        const items = clipboardData.items;
+        let imageFile: File | null = null;
 
-        lines.forEach(line => {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) return; // Ignorar líneas vacías
-
-            const parts = trimmedLine.split(':');
-            if (parts.length === 2) {
-                const skillName = parts[0].trim();
-                const skillValueStr = parts[1].trim();
-                const skillValue = parseInt(skillValueStr, 10);
-
-                if (skillName && !isNaN(skillValue) && skillValue >= 0 && skillValue <= 100) { // Validación básica
-                    potentialSkills[skillName] = skillValue;
-                    skillsFound++;
-                } else {
-                    parseSuccess = false; // Formato inválido encontrado
+        // 1. Buscar un item de imagen en el portapapeles
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    imageFile = blob;
+                    break; // Encontramos una imagen, salimos del bucle
                 }
-            } else {
-                parseSuccess = false; // Formato inválido encontrado
             }
-        });
+        }
 
-        if (skillsFound > 0 && parseSuccess) {
-             // Confirmación antes de reemplazar
-             if (window.confirm(`Se detectaron ${skillsFound} habilidades en el formato correcto (nombre: valor).\n\n¿Deseas REEMPLAZAR las habilidades estructuradas actuales de ${players[selectedPlayer].personaje} con estas?\n\n(El contenido actual del área de texto también se borrará).`)) {
-                 setPlayers(prev => ({
-                     ...prev,
-                     [selectedPlayer]: {
-                         ...prev[selectedPlayer],
-                         skills: potentialSkills, // Reemplazar skills estructuradas
-                         skillsNotes: "" // Borrar el área de notas
-                     }
-                 }));
-                 // Actualizar el estado local del textarea inmediatamente
-                 setSkillsText(prev => ({ ...prev, [selectedPlayer]: "" }));
-                 alert("Habilidades estructuradas actualizadas.");
-             } else {
-                  // Si el usuario cancela, pegar el texto normalmente en el textarea
-                 const textarea = event.currentTarget;
-                 const start = textarea.selectionStart;
-                 const end = textarea.selectionEnd;
-                 const currentText = textarea.value;
-                 const newText = currentText.substring(0, start) + pastedText + currentText.substring(end);
-                 handleSkillsTextChange(selectedPlayer, newText); // Usar el handler existente para actualizar estado y debounce
-                 // Mover cursor al final del texto pegado
-                 setTimeout(() => { textarea.selectionStart = textarea.selectionEnd = start + pastedText.length; }, 0);
+        // 2. Si se encontró una imagen
+        if (imageFile) {
+            event.preventDefault(); // Prevenir pegado por defecto
 
+            // Confirmar reemplazo (opcional, pero bueno si hay notas/skills existentes)
+             const currentNotes = players[selectedPlayer].skillsNotes;
+             const currentSkillsCount = Object.keys(players[selectedPlayer].skills ?? {}).length;
+             let confirmMsg = `Se detectó una imagen en el portapapeles.\n\n¿Deseas REEMPLAZAR el contenido actual de la sección de Habilidades con esta imagen?`;
+             if (currentNotes?.trim() || currentSkillsCount > 0) {
+                 confirmMsg += `\n\n(Se borrarán las notas y habilidades estructuradas actuales).`;
              }
+
+             if (window.confirm(confirmMsg)) {
+                 const reader = new FileReader();
+                 reader.onloadend = () => {
+                     const base64data = reader.result as string;
+                     setPlayers(prev => ({
+                         ...prev,
+                         [selectedPlayer]: {
+                             ...prev[selectedPlayer],
+                             skillsImageUrl: base64data, // Guardar Data URL
+                             skillsNotes: "", // Borrar notas
+                             skills: {}, // Borrar skills estructuradas
+                         }
+                     }));
+                      // Limpiar estado local del textarea
+                      setSkillsText(prev => ({ ...prev, [selectedPlayer]: "" }));
+                     alert("Imagen de habilidades establecida.");
+                 };
+                 reader.onerror = (error) => {
+                    console.error("Error leyendo el archivo de imagen:", error);
+                    alert("Error al procesar la imagen pegada.");
+                 };
+                 reader.readAsDataURL(imageFile); // Convertir a Base64
+             }
+             // Si el usuario cancela, no hacemos nada (el preventDefault ya evitó el pegado)
+
         } else {
-             // Si no se detectó formato válido o hubo errores, pegar normalmente
-             const textarea = event.currentTarget;
-             const start = textarea.selectionStart;
-             const end = textarea.selectionEnd;
-             const currentText = textarea.value;
-             const newText = currentText.substring(0, start) + pastedText + currentText.substring(end);
-             handleSkillsTextChange(selectedPlayer, newText); // Usar el handler existente
-             setTimeout(() => { textarea.selectionStart = textarea.selectionEnd = start + pastedText.length; }, 0);
-             if (skillsFound > 0 && !parseSuccess) {
-                 alert("Se detectó texto con formato 'nombre: valor', pero algunas líneas tenían errores o valores inválidos (0-100). El texto se ha pegado normalmente.");
+             // 3. Si NO es una imagen, procesar como texto (lógica anterior)
+             event.preventDefault(); // Prevenir pegado por defecto también para texto controlado
+
+             const pastedText = clipboardData.getData('text');
+             const lines = pastedText.trim().split('\n');
+             const potentialSkills: Record<string, number> = {};
+             let parseSuccess = true;
+             let skillsFound = 0;
+
+             lines.forEach(line => { /* ... (exactamente la misma lógica de parseo de texto que antes) ... */
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
+                const parts = trimmedLine.split(':');
+                if (parts.length === 2) {
+                    const skillName = parts[0].trim();
+                    const skillValueStr = parts[1].trim();
+                    const skillValue = parseInt(skillValueStr, 10);
+                    if (skillName && !isNaN(skillValue) && skillValue >= 0 && skillValue <= 100) {
+                        potentialSkills[skillName] = skillValue; skillsFound++;
+                    } else { parseSuccess = false; }
+                } else { parseSuccess = false; }
+             });
+
+             if (skillsFound > 0 && parseSuccess) {
+                 if (window.confirm(`Se detectaron ${skillsFound} habilidades...\n\n¿Reemplazar habilidades estructuradas actuales...?`)) { // Mensaje abreviado
+                     setPlayers(prev => ({ ...prev, [selectedPlayer]: { ...prev[selectedPlayer], skills: potentialSkills, skillsNotes: "", skillsImageUrl: undefined } })); // Borrar también URL de imagen si aceptan texto
+                     setSkillsText(prev => ({ ...prev, [selectedPlayer]: "" })); alert("Habilidades estructuradas actualizadas.");
+                 } else { /* Pega texto normalmente si cancela */
+                    const textarea = event.currentTarget; const start = textarea.selectionStart; const end = textarea.selectionEnd; const currentText = textarea.value; const newText = currentText.substring(0, start) + pastedText + currentText.substring(end); handleSkillsTextChange(selectedPlayer, newText); setTimeout(() => { textarea.selectionStart = textarea.selectionEnd = start + pastedText.length; }, 0);
+                 }
+             } else { /* Pega texto normalmente si no detecta/falla parseo */
+                 const textarea = event.currentTarget; const start = textarea.selectionStart; const end = textarea.selectionEnd; const currentText = textarea.value; const newText = currentText.substring(0, start) + pastedText + currentText.substring(end); handleSkillsTextChange(selectedPlayer, newText); setTimeout(() => { textarea.selectionStart = textarea.selectionEnd = start + pastedText.length; }, 0);
+                 if (skillsFound > 0 && !parseSuccess) { alert("Formato 'nombre: valor' con errores detectado. Texto pegado normalmente."); }
              }
-             // Si no se encontraron skills, no mostrar alerta.
         }
     };
 
