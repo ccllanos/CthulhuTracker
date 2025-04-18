@@ -150,6 +150,7 @@ const CthulhuTracker = () => {
     const [inventoryText, setInventoryText] = useState<Record<string, string>>({});
     const [isSkillsExpanded, setIsSkillsExpanded] = useState(false);
     const [isInventoryExpanded, setIsInventoryExpanded] = useState(false);
+    const [skillsSortOrder, setSkillsSortOrder] = useState<'name-asc' | 'name-desc' | 'value-asc' | 'value-desc'>('name-asc'); // Estado para ordenar habilidades
     const [boutOfMadnessResult, setBoutOfMadnessResult] = useState<string | null>(null);
     const [isBoutOfMadnessAlertOpen, setIsBoutOfMadnessAlertOpen] = useState(false);
     const [isSessionActive, setIsSessionActive] = useState(false);
