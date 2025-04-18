@@ -865,134 +865,94 @@ const CthulhuTracker = () => {
      }, [players, debouncedUpdatePlayerField]);
 
      const handleSkillsPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-        console.log("handleSkillsPaste triggered"); // LOG 1: Función iniciada
+        console.log("handleSkillsPaste (No Confirm) triggered"); // LOG 1
         if (!selectedPlayer || !players[selectedPlayer] || players[selectedPlayer].statuses.muerto) {
-             console.log("Paste cancelled: No selected player or player is dead."); // LOG 2: Cancelado temprano
-             return;
+             console.log("Paste cancelled: No selected player or player is dead."); return;
         }
 
         const clipboardData = event.clipboardData;
         const items = clipboardData.items;
         let imageFile: File | null = null;
-        console.log("Clipboard items:", items.length, items); // LOG 3: Ver items del portapapeles
+        console.log("Clipboard items:", items.length); // LOG 2
 
         // 1. Buscar imagen
         for (let i = 0; i < items.length; i++) {
-             console.log(`Item ${i}: type=${items[i].type}, kind=${items[i].kind}`); // LOG 4: Detalles de cada item
             if (items[i].type.indexOf('image') !== -1) {
                 const blob = items[i].getAsFile();
                 if (blob) {
-                    console.log("Image blob found:", blob); // LOG 5: Blob de imagen encontrado
-                    imageFile = blob;
-                    break;
-                } else {
-                     console.log("Image type detected, but getAsFile() returned null."); // LOG 6: Error obteniendo archivo
+                    console.log("Image blob found"); imageFile = blob; break; // LOG 3
                 }
             }
         }
 
-        // 2. Procesar si es imagen
+        // 2. Procesar si es imagen (Reemplazo Directo)
         if (imageFile) {
-            console.log("Processing as image..."); // LOG 7: Iniciando procesamiento de imagen
+            console.log("Processing as image (direct replace)..."); // LOG 4
             event.preventDefault();
-
-            const currentNotes = players[selectedPlayer].skillsNotes;
-            const currentSkillsCount = Object.keys(players[selectedPlayer].skills ?? {}).length;
-            let confirmMsg = `Se detectó una imagen...\n\n¿Reemplazar contenido de Habilidades?`;
-            if (currentNotes?.trim() || currentSkillsCount > 0) { confirmMsg += `\n\n(Se borrarán notas/habilidades estructuradas).`; }
-
-            if (window.confirm(confirmMsg)) {
-                console.log("Image replacement confirmed by user."); // LOG 8: Confirmación de imagen
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    console.log("FileReader onloadend triggered."); // LOG 9: Imagen leída
-                    const base64data = reader.result as string;
-                    setPlayers(prev => {
-                        console.log("Updating player state with image URL."); // LOG 10: Actualizando estado (imagen)
-                        return {
-                            ...prev,
-                            [selectedPlayer]: { ...prev[selectedPlayer], skillsImageUrl: base64data, skillsNotes: "", skills: {} }
-                        };
-                     });
-                    setSkillsText(prev => ({ ...prev, [selectedPlayer]: "" }));
-                    alert("Imagen de habilidades establecida.");
-                };
-                reader.onerror = (error) => {
-                    console.error("FileReader error:", error); // LOG 11: Error de FileReader
-                    alert("Error al procesar la imagen pegada.");
-                };
-                reader.readAsDataURL(imageFile);
-            } else {
-                 console.log("Image replacement cancelled by user."); // LOG 12: Cancelación de imagen
-            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                console.log("FileReader onloadend."); // LOG 5
+                const base64data = reader.result as string;
+                setPlayers(prev => {
+                    console.log("Updating player state with image URL (direct)."); // LOG 6
+                    return { ...prev, [selectedPlayer]: { ...prev[selectedPlayer], skillsImageUrl: base64data, skillsNotes: "", skills: {} } };
+                 });
+                setSkillsText(prev => ({ ...prev, [selectedPlayer]: "" }));
+                // Podríamos añadir un pequeño aviso no modal si se desea
+                // console.log("Image set successfully.");
+            };
+            reader.onerror = (error) => { console.error("FileReader error:", error); alert("Error al procesar la imagen."); }; // LOG 7
+            reader.readAsDataURL(imageFile);
 
         } else {
              // 3. Procesar como texto si no es imagen
-             console.log("Processing as text..."); // LOG 13: Iniciando procesamiento de texto
+             console.log("Processing as text (checking format)..."); // LOG 8
              event.preventDefault();
-
-             const pastedText = clipboardData.getData('text/plain'); // Ser explícito con text/plain
-             console.log("Pasted text:", pastedText); // LOG 14: Texto pegado
-             if (!pastedText || !pastedText.trim()) {
-                  console.log("Pasted text is empty."); // LOG 15: Texto vacío
-                  return; // No hacer nada si no hay texto
-             }
+             const pastedText = clipboardData.getData('text/plain');
+             console.log("Pasted text:", pastedText); // LOG 9
+             if (!pastedText || !pastedText.trim()) { console.log("Pasted text is empty."); return; } // LOG 10
 
              const lines = pastedText.trim().split('\n');
              const potentialSkills: Record<string, number> = {};
-             const errorsInFormat: string[] = [];
+             let parseSuccess = true; // Asumir éxito hasta encontrar error
              let skillsFound = 0;
 
-             lines.forEach((line, index) => {
+             lines.forEach((line) => {
                  const trimmedLine = line.trim();
-                 if (!trimmedLine) return;
+                 if (!trimmedLine) return; // Ignorar vacías
 
                  const parts = trimmedLine.split(':');
                  if (parts.length === 2) {
                      const skillName = parts[0].trim();
                      const skillValueStr = parts[1].trim();
                      const skillValue = parseInt(skillValueStr, 10);
-
-                     if (skillName && !isNaN(skillValue) && skillValue >= 0 && skillValue <= 100) { // Validar valor 0-100
-                         potentialSkills[skillName] = skillValue;
-                         skillsFound++;
-                     } else {
-                         // Error en formato o valor
-                         errorsInFormat.push(`Línea ${index + 1}: "${line}" (valor inválido o fuera de 0-100)`);
-                     }
-                 } else if (trimmedLine.includes(':')) {
-                     // Tenía ':' pero no el formato correcto
-                      errorsInFormat.push(`Línea ${index + 1}: "${line}" (formato incorrecto)`);
-                 }
-                 // Si no tiene ':' en absoluto, simplemente se ignora (no se considera un error de formato)
-             });
-             console.log("Parsed skills:", potentialSkills, "Errors found:", errorsInFormat.length); // LOG 16: Resultados del parseo
-
-             // Decidir qué hacer basado en el parseo
-             if (skillsFound > 0 && errorsInFormat.length === 0) {
-                 // Todo OK, parseo limpio
-                 if (window.confirm(`Se detectaron ${skillsFound} habilidades válidas.\n\n¿Reemplazar habilidades estructuradas actuales?`)) {
-                     console.log("Text parse replacement confirmed."); // LOG 17: Confirmación de parseo
-                     setPlayers(prev => {
-                         console.log("Updating player state with parsed skills."); // LOG 18: Actualizando estado (texto)
-                         return { ...prev, [selectedPlayer]: { ...prev[selectedPlayer], skills: potentialSkills, skillsNotes: "", skillsImageUrl: undefined }};
-                     });
-                     setSkillsText(prev => ({ ...prev, [selectedPlayer]: "" }));
-                     alert("Habilidades estructuradas actualizadas.");
+                     if (skillName && !isNaN(skillValue) && skillValue >= 0 && skillValue <= 100) {
+                         potentialSkills[skillName] = skillValue; skillsFound++;
+                     } else { parseSuccess = false; } // Error en esta línea
                  } else {
-                     console.log("Text parse replacement cancelled. Pasting text normally."); // LOG 19: Cancelación de parseo
-                     pasteTextNormally(event, pastedText); // Usar función helper
+                     // Si la línea no está vacía y no tiene el formato N:N, consideramos fallo de parseo global
+                     parseSuccess = false;
                  }
-             } else if (skillsFound > 0 && errorsInFormat.length > 0) {
-                  // Parseo parcial con errores
-                  alert(`Se detectaron ${skillsFound} habilidades válidas, pero hubo errores en ${errorsInFormat.length} líneas:\n\n${errorsInFormat.join('\n')}\n\nEl texto se pegará normalmente.`);
-                  console.log("Partial parse errors. Pasting text normally."); // LOG 20: Errores parciales
-                  pasteTextNormally(event, pastedText); // Usar función helper
-             }
-              else {
-                  // No se detectó formato válido en absoluto
-                  console.log("No valid 'key: value' format detected. Pasting text normally."); // LOG 21: Sin formato detectado
-                  pasteTextNormally(event, pastedText); // Usar función helper
+             });
+             console.log("Parsed skills:", potentialSkills, "Parse success:", parseSuccess, "Skills found:", skillsFound); // LOG 11
+
+             // Reemplazar directo si se encontraron habilidades Y el parseo fue exitoso
+             if (skillsFound > 0 && parseSuccess) {
+                 console.log("Valid format detected. Updating player state (direct)."); // LOG 12
+                 setPlayers(prev => {
+                     console.log("Updating player state with parsed skills (direct)."); // LOG 13
+                     return { ...prev, [selectedPlayer]: { ...prev[selectedPlayer], skills: potentialSkills, skillsNotes: "", skillsImageUrl: undefined } };
+                  });
+                 setSkillsText(prev => ({ ...prev, [selectedPlayer]: "" }));
+                 // console.log("Skills updated successfully from text.");
+             } else {
+                  // Si no se encontraron, o hubo errores de formato, pegar normalmente
+                  console.log("No valid format or parse errors. Pasting text normally."); // LOG 14
+                  pasteTextNormally(event, pastedText);
+                  if (skillsFound > 0 && !parseSuccess) {
+                      // Avisar si hubo un intento fallido de parseo
+                      alert("Se detectó formato 'nombre: valor' pero con errores o líneas inválidas. El texto se ha pegado normalmente.");
+                  }
              }
         }
     };
