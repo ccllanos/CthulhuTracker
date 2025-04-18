@@ -849,6 +849,94 @@ const CthulhuTracker = () => {
          }
     };
 
+        // Handler para confirmar que se ha visto el episodio y continuar
+        const handleAcknowledgePause = () => {
+            if (!currentSequencePauseReason || currentSequencePauseReason.type !== 'episode') return;
+    
+            const playerKeyHandled = currentSequencePauseReason.playerKey;
+            console.log(`Continuando secuencia después del episodio de ${playerKeyHandled}.`);
+            setCurrentSequencePauseReason(null); // Limpiar estado de pausa
+            advanceOrEndSequence(playerKeyHandled); // Avanzar/finalizar
+        };
+
+            // Handler para resolver el chequeo INT de locura temporal
+    const handleResolveTempIntCheck = (passedIntCheck: boolean) => {
+        if (!currentSequencePauseReason || currentSequencePauseReason.type !== 'temp_int_check') return;
+
+        const playerKey = currentSequencePauseReason.playerKey;
+        const intelligence = currentSequencePauseReason.data.intelligence; // Recuperar INT
+        console.log(`Resolviendo chequeo INT para ${playerKey}. Resultado: ${passedIntCheck ? 'Superada (Loco)' : 'Fallada (Reprimida)'}`);
+
+        let boutTextForGlobalAlert: string | undefined = undefined;
+
+        // Actualizar estado del jugador
+        setPlayers(prev => {
+             const updatedPlayerData = JSON.parse(JSON.stringify(prev[playerKey]));
+             updatedPlayerData.pendingChecks.needsTempInsanityIntCheck = false; // Limpiar check
+             if (passedIntCheck) {
+                 // Superó INT -> Locura Temporal activada
+                 updatedPlayerData.statuses.locuraTemporal = true;
+                 updatedPlayerData.statuses.locuraIndefinida = false; // Asegurar exclusividad
+                 updatedPlayerData.statuses.locuraSubyacente = false;
+                 // Disparar episodio asociado a la activación de Locura Temporal
+                  boutTextForGlobalAlert = triggerBoutOfMadness(playerKey, 'locuraTemporal');
+             } else {
+                 // Falló INT -> Reprimida, no hay cambio de estado de locura
+                 // (El check ya se limpió)
+             }
+             return { ...prev, [playerKey]: updatedPlayerData };
+        });
+
+        if (boutTextForGlobalAlert) {
+             // Mostrar episodio en el alert global ya que la secuencia continúa
+             setBoutOfMadnessResult(boutTextForGlobalAlert);
+             setIsBoutOfMadnessAlertOpen(true);
+        }
+
+        setCurrentSequencePauseReason(null); // Limpiar estado de pausa
+        advanceOrEndSequence(playerKey); // Avanzar/finalizar
+    };
+
+        // Handler para confirmar la locura indefinida
+        const handleResolveIndefConfirm = () => {
+            if (!currentSequencePauseReason || currentSequencePauseReason.type !== 'indef_confirm') return;
+   
+            const playerKey = currentSequencePauseReason.playerKey;
+            console.log(`Confirmando Locura Indefinida para ${playerKey}.`);
+   
+            let boutTextForNextPause: string | undefined = undefined;
+   
+            // Actualizar estado del jugador
+            setPlayers(prev => {
+                const updatedPlayerData = JSON.parse(JSON.stringify(prev[playerKey]));
+                updatedPlayerData.pendingChecks.needsIndefiniteInsanityConfirmation = false; // Limpiar check
+                // Activar Locura Indefinida y limpiar otras
+                updatedPlayerData.statuses.locuraIndefinida = true;
+                updatedPlayerData.statuses.locuraTemporal = false;
+                updatedPlayerData.statuses.locuraSubyacente = false;
+                // Limpiar checks relacionados por si acaso
+                updatedPlayerData.pendingChecks.needsTempInsanityIntCheck = false;
+                updatedPlayerData.pendingChecks.needsSubyacenteConfirmation = false;
+   
+                // Disparar episodio asociado a la activación de Locura Indefinida
+                boutTextForNextPause = triggerBoutOfMadness(playerKey, 'locuraIndefinida');
+   
+                return { ...prev, [playerKey]: updatedPlayerData };
+            });
+   
+           if (boutTextForNextPause) {
+               // Cambiar el estado de pausa para mostrar el episodio recién generado
+               setCurrentSequencePauseReason({ type: 'episode', data: { boutText: boutTextForNextPause }, playerKey });
+               console.log(`   Nuevo estado de pausa: Mostrar episodio para ${playerKey}.`);
+           } else {
+                // Si triggerBoutOfMadness falla (no debería), continuar por seguridad
+                console.warn("No se pudo generar el texto del episodio para Locura Indefinida, continuando secuencia.");
+                setCurrentSequencePauseReason(null);
+                advanceOrEndSequence(playerKey);
+           }
+            // NO se llama a advanceOrEndSequence aquí directamente, se pasa a la pausa de 'episode'.
+       };
+
     
         // TODO: Limpiar currentSanityLossInput
         // Aquí irá la lógica de validación, actualización y avance
@@ -1306,13 +1394,13 @@ const CthulhuTracker = () => {
                                         {/* --- Footer Condicional --- */}
                                         <AlertDialogFooter>
                                              {pauseInfo?.type === 'episode' && (
-                                                <AlertDialogAction className="bg-green-700 hover:bg-green-600" onClick={() => console.log('TODO: Llamar handleAcknowledgePause')}>
+                                                <AlertDialogAction className="bg-green-700 hover:bg-green-600" onClick={handleAcknowledgePause}>
                                                     Episodio Anotado / Continuar
                                                 </AlertDialogAction>
                                             )}
                                             {pauseInfo?.type === 'temp_int_check' && (
                                                 <div className="flex gap-2 w-full justify-end">
-                                                      <Button size="sm" variant="outline" className="text-xs bg-red-800 hover:bg-red-700 h-8 px-3 border-red-600" onClick={() => console.log('TODO: Llamar handleResolveTempIntCheck(true)')}>
+                                                      <Button size="sm" variant="outline" className="text-xs bg-red-800 hover:bg-red-700 h-8 px-3 border-red-600" onClick={() => handleResolveTempIntCheck(true)}>
                                                           Superada (Loco)
                                                       </Button>
                                                       <Button size="sm" variant="outline" className="text-xs bg-green-700 hover:bg-green-600 h-8 px-3 border-green-600" onClick={() => console.log('TODO: Llamar handleResolveTempIntCheck(false)')}>
