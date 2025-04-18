@@ -849,16 +849,7 @@ const CthulhuTracker = () => {
          }
     };
 
-    const handleContinueSequenceAfterEpisode = () => {
-        if (!currentEpisodeTriggered) return; // Guarda por si acaso
-
-        const playerKeyHandled = currentEpisodeTriggered.playerKey; // Guardar key antes de limpiar
-        console.log(`Continuando secuencia después del episodio de ${playerKeyHandled}.`);
-        setCurrentEpisodeTriggered(null); // Limpiar estado del episodio
-
-        // Ahora, ejecutar la lógica de avance/finalización para el jugador que tuvo el episodio
-        advanceOrEndSequence(playerKeyHandled);
-    };
+    
         // TODO: Limpiar currentSanityLossInput
         // Aquí irá la lógica de validación, actualización y avance
     };
