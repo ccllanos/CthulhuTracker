@@ -932,6 +932,63 @@ const CthulhuTracker = () => {
              // Si no se encontraron skills, no mostrar alerta.
         }
     };
+
+     const handleSkillCheck = (skillName: string, skillValue: number) => {
+        if (currentPlayer?.statuses.muerto) {
+            alert(`${currentPlayer.personaje} está muerto y no puede realizar chequeos.`);
+            return;
+        }
+
+        const rollInput = prompt(`Chequeo de ${skillName} (${skillValue}%)\n\nIntroduce el resultado del D100:`);
+
+        if (rollInput === null) return; // El usuario canceló el prompt
+
+        const roll = parseInt(rollInput.trim(), 10);
+
+        if (isNaN(roll) || roll < 1 || roll > 100) {
+            alert("Error: Introduce un número válido entre 1 y 100.");
+            return;
+        }
+
+        // Calcular niveles de éxito
+        const hardSuccessThreshold = Math.floor(skillValue / 2);
+        const extremeSuccessThreshold = Math.floor(skillValue / 5);
+        let resultText = "";
+        let resultClass = "text-red-500"; // Default: Fallo
+
+        // Determinar resultado según reglas CoC 7th Ed.
+        if (roll === 1) {
+            resultText = "¡ÉXITO CRÍTICO!";
+            resultClass = "text-green-400 font-bold";
+        } else if (roll === 100) {
+            resultText = "¡PIFIA!";
+            resultClass = "text-red-700 font-bold";
+        } else if (roll > skillValue) {
+            // Pifia especial para 96-100 si la habilidad es < 50
+            if (roll >= 96 && skillValue < 50) {
+                resultText = "¡PIFIA!";
+                 resultClass = "text-red-700 font-bold";
+            } else {
+                resultText = "FALLO";
+                // resultClass ya es rojo
+            }
+        } else { // Éxito (Normal, Difícil o Extremo)
+            if (roll <= extremeSuccessThreshold) {
+                resultText = "ÉXITO EXTREMO";
+                resultClass = "text-teal-400 font-semibold";
+            } else if (roll <= hardSuccessThreshold) {
+                resultText = "ÉXITO DIFÍCIL";
+                resultClass = "text-yellow-400 font-semibold";
+            } else {
+                resultText = "ÉXITO NORMAL";
+                resultClass = "text-green-500";
+            }
+        }
+
+        // Mostrar resultado
+        alert(`--- Chequeo: ${skillName} (${skillValue}%) ---\nResultado D100: ${roll}\n\n${resultText}`);
+        // Podríamos usar un modal más elegante en el futuro en lugar de alert.
+     };
     // --- Render ---
     const currentPlayer = selectedPlayer ? players[selectedPlayer] : null;
     const orderedStatNames = Object.keys(initialStats);
