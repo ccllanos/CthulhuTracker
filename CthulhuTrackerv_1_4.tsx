@@ -785,7 +785,24 @@ const CthulhuTracker = () => {
                         }
                     }
 
-                    // TODO: 2. Chequeo Locura Indefinida (pérdida sesión >= 1/5 SAN inicial)
+                                        // 2. Chequeo Locura Indefinida (pérdida sesión >= 1/5 SAN inicial del evento)
+                                        const indefiniteThreshold = Math.floor(currentSanityActual / 5);
+                                        if (sessionLoss >= indefiniteThreshold && !newStatuses.locuraIndefinida) {
+                                            // Indefinida tiene prioridad sobre Temporal y Subyacente
+                                            if (newStatuses.locuraTemporal) {
+                                                newStatuses.locuraTemporal = false;
+                                                newPendingChecks.needsTempInsanityIntCheck = false; // Anular check temporal
+                                            }
+                                            if (newStatuses.locuraSubyacente) {
+                                                newStatuses.locuraSubyacente = false;
+                                                // No hay pending check específico para subyacente
+                                            }
+                                            newPendingChecks.needsIndefiniteInsanityConfirmation = true;
+                                            alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): ¡LOCURA INDEFINIDA DESENCADENADA! (Pérdida sesión: ${sessionLoss} >= ${indefiniteThreshold} (1/5 de ${currentSanityActual} SAN)).\n- Confirmar para activar estado y episodio.`);
+                    
+                                            // Si se dispara Indefinida, no necesitamos el check de Temporal si también se cumplía
+                                            newPendingChecks.needsTempInsanityIntCheck = false;
+                                        }
                     // TODO: 3. Chequeo Episodio (pérdida SAN durante Locura existente)
                 }
 
