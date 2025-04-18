@@ -744,7 +744,7 @@ const CthulhuTracker = () => {
                          {isSessionActive ? <Square size={16} /> : <Play size={16} />} {isSessionActive ? 'Terminar Sesión' : 'Iniciar Sesión'}
                       </Button>
                       <Button
-                         onClick={() => console.log('TODO: Iniciar Chequeo Cordura Grupal')} // Placeholder action
+                         onClick={() => setIsSanityCheckModalOpen(true)}
                          variant="outline"
                          className={cn(
                              "border-2 px-4 py-2 rounded-md flex items-center gap-2 transition-colors duration-200 border-blue-600 hover:bg-blue-900/50 text-blue-100",
