@@ -162,7 +162,8 @@ const CthulhuTracker = () => {
     const [groupSanityLossFailureInput, setGroupSanityLossFailureInput] = useState<string>(""); // Input para ej: "1d4"
     const [groupSanityPlayerRolls, setGroupSanityPlayerRolls] = useState<Record<string, string>>({}); // {playerId: "75"}
     const [isGroupSanityModalOpen, setIsGroupSanityModalOpen] = useState<boolean>(false); // Control del modal inicial
-        const [currentGroupSanityPlayerIndex, setCurrentGroupSanityPlayerIndex] = useState<number | null>(null); // Índice del jugador activo siendo procesado
+    const [currentGroupSanityPlayerIndex, setCurrentGroupSanityPlayerIndex] = useState<number | null>(null); // Índice del jugador activo siendo procesado
+    const [currentGroupSanityLossInput, setCurrentGroupSanityLossInput] = useState<string>(""); // Input para la pérdida SAN específica del jugador actual
     // --- Effects ---
     useEffect(() => {
         // --- Initial Load Logic ---
@@ -739,10 +740,53 @@ const CthulhuTracker = () => {
                          <h3 className="text-xl font-semibold text-purple-300 mb-3 text-center flex items-center justify-center gap-2">
                              <BrainCircuit size={22} /> Procesando Chequeo de Cordura...
                          </h3>
-                         {/* Contenido específico del jugador actual irá aquí */}
-                         <div className='text-center text-gray-400 italic'>
-                             [Información del jugador actual y acción requerida...]
-                         </div>
+                                                  {(() => { // IIFE para lógica de renderizado compleja
+                            if (currentGroupSanityPlayerIndex === null) return null; // Seguridad
+                            const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
+                            const playerKey = activePlayerKeys[currentGroupSanityPlayerIndex];
+                            if (!playerKey || !players[playerKey]) return <p className="text-center text-red-500">Error: Jugador no encontrado.</p>; // Seguridad
+
+                            const playerData = players[playerKey];
+                            const playerRoll = parseInt(groupSanityPlayerRolls[playerKey] || "999", 10); // Parsear tirada, default alto para fallo seguro
+                            const targetSanity = playerData.stats.cordura;
+                            const success = !isNaN(playerRoll) && playerRoll <= targetSanity;
+                            const lossDescription = success ? groupSanityLossSuccessInput : groupSanityLossFailureInput;
+
+                            return (
+                                <div className="text-center space-y-3">
+                                    <p className="text-lg font-medium text-gray-200">{playerData.personaje}</p>
+                                    <p className="text-sm text-gray-400">
+                                        Tirada SAN: <span className="font-bold text-gray-100">{groupSanityPlayerRolls[playerKey]}</span> vs <span className="font-bold text-gray-100">{targetSanity}</span>
+                                    </p>
+                                    <p className={`text-lg font-bold ${success ? 'text-green-400' : 'text-red-400'}`}>
+                                        {success ? 'ÉXITO' : 'FALLO'}
+                                    </p>
+                                    <p className="text-md text-gray-300">
+                                        Pérdida de Cordura: <span className="font-semibold text-yellow-400">{lossDescription}</span>
+                                    </p>
+                                    <div className="flex justify-center items-center gap-2 pt-2">
+                                        <Label htmlFor="currentSanLoss" className="text-sm text-gray-400">Introduce pérdida:</Label>
+                                        <Input
+                                            id="currentSanLoss"
+                                            type="text"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            value={currentGroupSanityLossInput}
+                                            onChange={(e) => setCurrentGroupSanityLossInput(e.target.value.replace(/[^0-9]/g, ''))}
+                                            className="bg-gray-800 border-gray-600 h-8 w-20 text-center focus:border-purple-500 focus:ring-purple-500"
+                                            placeholder="#"
+                                            autoFocus // Enfocar automáticamente este input
+                                        />
+                                        <Button
+                                            onClick={() => { /* TODO: Aplicar pérdida y pasar al siguiente */ }}
+                                            className="bg-purple-600 hover:bg-purple-500 h-8 px-3 text-sm"
+                                        >
+                                            Confirmar y Siguiente
+                                        </Button>
+                                    </div>
+                                </div>
+                            );
+                         })()}
                      </div>
                  )}
                  {/* --- Fin Sección de Procesamiento --- */}
