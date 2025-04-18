@@ -1163,7 +1163,31 @@ const CthulhuTracker = () => {
                                    {isSkillsExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                </Button>
                                {isSkillsExpanded && (
-                                   <>                                
+                                   <>
+                                       {/* Mostrar Imagen Pegada (si existe) */}
+                                       {currentPlayer?.skillsImageUrl && (
+                                            <div className="mb-2 relative group">
+                                                <img
+                                                    src={currentPlayer.skillsImageUrl}
+                                                    alt="Habilidades Pegadas"
+                                                    className="w-full h-auto border border-gray-600 rounded"
+                                                />
+                                                 {/* Botón para eliminar la imagen */}
+                                                 <Button
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    className="absolute top-1 right-1 h-6 w-6 opacity-50 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => {
+                                                        if (window.confirm("¿Eliminar la imagen pegada de habilidades?")) {
+                                                             setPlayers(prev => ({...prev, [selectedPlayer]: {...prev[selectedPlayer], skillsImageUrl: undefined }}));
+                                                        }
+                                                    }}
+                                                    title="Eliminar Imagen"
+                                                >
+                                                    <XCircle size={16}/>
+                                                </Button>
+                                            </div>
+                                       )}                                
                                    <Textarea
                                         id={`skills-notes-${selectedPlayer}`}
                                         onPaste={handleSkillsPaste} // <<< Añadir manejador onPaste
