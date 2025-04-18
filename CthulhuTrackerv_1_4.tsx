@@ -625,6 +625,15 @@ const CthulhuTracker = () => {
             alert("Sesión terminada. Chequeos pendientes y pérdida de SAN acumulada reiniciados.");
         }
     }, [isSessionActive]); // Depend only on isSessionActive
+        const handleInitiateGroupSanityCheck = () => {
+        if (!isSessionActive) return; // Safety check
+        // Resetear estados previos por si acaso
+        setGroupSanityLossSuccessInput("");
+        setGroupSanityLossFailureInput("");
+        setGroupSanityPlayerRolls({});
+        setIsGroupSanityModalOpen(true); // Abre el modal de entrada
+        // Aún no activamos isGroupSanityCheckActive, eso será después de introducir datos
+    };
     // --- Textarea Handlers ---
     const handleSkillsTextChange = useCallback((playerKey: string, value: string) => {
          if (players[playerKey]?.statuses.muerto) return;
@@ -661,7 +670,7 @@ const CthulhuTracker = () => {
                       </Button>
                                             {/* Botón añadido para Chequeo Grupal */}
                       <Button
-                        onClick={() => alert("FUNCIONALIDAD PENDIENTE: Iniciar Chequeo de Cordura Grupal")} // Placeholder action
+                                                onClick={handleInitiateGroupSanityCheck}
                         variant="outline"
                         className={cn(
                             "border-2 px-4 py-2 rounded-md flex items-center gap-2 transition-colors duration-200",
