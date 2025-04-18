@@ -1254,61 +1254,98 @@ const CthulhuTracker = () => {
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             {/* Determinar si hay episodio para el jugador actual */}
-                        {(() => {
-                            const currentStepData = sequenceData[currentSequenceIndex];
-                            const episodeInfo = currentEpisodeTriggered && currentEpisodeTriggered.playerKey === currentStepData.playerKey ? currentEpisodeTriggered : null;
+                                                    {/* IIFE para obtener datos y determinar pausa */}
+                                                    {(() => {
+                                // Asegurarse de que hay datos válidos antes de intentar acceder
+                                if (!sequenceData || sequenceData.length === 0 || currentSequenceIndex >= sequenceData.length) {
+                                    return <p className="text-center text-gray-500">Cargando datos de secuencia...</p>; // O algún fallback
+                                }
+                                const currentStepData = sequenceData[currentSequenceIndex];
+                                const pauseInfo = currentSequencePauseReason?.playerKey === currentStepData.playerKey ? currentSequencePauseReason : null;
 
-                            return (
-                                <>
-                                    {/* Contenido Principal Condicional */}
-                                    {episodeInfo ? (
-                                         // Mostrar Información del Episodio
-                                         <div className="p-3 bg-red-900/30 border border-red-700 rounded-md">
-                                             <h4 className="text-red-400 font-semibold mb-2">¡Episodio de Locura Desencadenado!</h4>
-                                             <p className="text-sm text-gray-200 whitespace-pre-wrap">{episodeInfo.boutText}</p>
-                                         </div>
-                                     ) : (
-                                         // Mostrar Input de Pérdida SAN (como antes)
-                                         <>
-                                             <Label htmlFor="sanity-loss-input" className="text-sm font-medium text-gray-400 block mb-1">
-                                                 Introduce la pérdida de Cordura ({currentStepData.lossAmountString}):
-                                             </Label>
-                                             <Input
-                                                 id="sanity-loss-input"
-                                                 type="number"
-                                                 min="0"
-                                                 value={currentSanityLossInput}
-                                                 onChange={(e) => setCurrentSanityLossInput(e.target.value)}
-                                                 className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-yellow-500 focus:ring-yellow-500 w-full text-center h-10 text-lg"
-                                                 placeholder="Pérdida SAN"
-                                                 autoFocus
-                                                 disabled={isConfirmingLoss} // Deshabilitar mientras se confirma
-                                             />
-                                         </>
-                                     )}
-                                     </div>
-                                                                     <AlertDialogFooter>
-                                                                     {episodeInfo ? (
-                                                                         // Botón para continuar después del episodio
-                                                                         <AlertDialogAction className="bg-green-700 hover:bg-green-600" onClick={handleContinueSequenceAfterEpisode}>
-                                                                         Episodio Anotado / Continuar
-                                                                     </AlertDialogAction>
-                                                                     ) : (
-                                                                         // Botón para confirmar pérdida (como antes)
-                                                                         <AlertDialogAction
-                                                                             className={cn("bg-yellow-700 hover:bg-yellow-600 flex items-center justify-center gap-2", isConfirmingLoss && "opacity-75 cursor-not-allowed")}
-                                                                             onClick={handleConfirmSanityLoss}
-                                                                             disabled={isConfirmingLoss}
-                                                                         >
-                                                                             {isConfirmingLoss ? (
-                                                                                 <><Loader2 className="h-4 w-4 animate-spin" /> Procesando...</>
-                                                                             ) : ( "Confirmar Pérdida" )}
-                                                                         </AlertDialogAction>
-                                                                     )}
-                                                                 </AlertDialogFooter>
-                                                                                                 </>
-                                                                                                );
-                                                                                            })()}
+                                // --- Renderizado Condicional ---
+                                return (
+                                    <>
+                                        {/* --- Contenido Principal Condicional --- */}
+                                        <div className="my-4 space-y-3">
+                                            {pauseInfo?.type === 'episode' && (
+                                                <div className="p-3 bg-red-900/30 border border-red-700 rounded-md">
+                                                    <h4 className="text-red-400 font-semibold mb-2">¡Episodio de Locura Desencadenado!</h4>
+                                                    <p className="text-sm text-gray-200 whitespace-pre-wrap">{pauseInfo.data.boutText}</p>
+                                                </div>
+                                            )}
+
+                                            {pauseInfo?.type === 'temp_int_check' && (
+                                                 <div className="p-3 bg-yellow-900/30 border border-yellow-700 rounded-md">
+                                                    <h4 className="text-yellow-400 font-semibold mb-2">Acción Requerida: Locura Temporal</h4>
+                                                    <p className="text-sm text-gray-200">
+                                                        {currentStepData.personaje} perdió {pauseInfo.data.lossAmount} SAN (>= 5). Debe superar una tirada de INT vs {pauseInfo.data.intelligence} para evitar la locura temporal.
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 mt-1">(Si supera la tirada INT, entra en Locura Temporal. Si falla, reprime el horror y no hay efecto inmediato).</p>
+                                                </div>
+                                            )}
+
+                                            {pauseInfo?.type === 'indef_confirm' && (
+                                                <div className="p-3 bg-purple-900/30 border border-purple-700 rounded-md">
+                                                    <h4 className="text-purple-400 font-semibold mb-2">Acción Requerida: Locura Indefinida</h4>
+                                                    <p className="text-sm text-gray-200">
+                                                         ¡Locura Indefinida desencadenada para {currentStepData.personaje}! (Pérdida sesión: {pauseInfo.data.sessionLoss} >= {pauseInfo.data.threshold}, 1/5 de {pauseInfo.data.sanityBefore} SAN).
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 mt-1">(Confirmar activará el estado y desencadenará un episodio de locura inmediato).</p>
+                                                </div>
+                                            )}
+
+                                            {!pauseInfo && ( // Si no hay pausa, mostrar input de pérdida
+                                                <>
+                                                    <Label htmlFor="sanity-loss-input" className="text-sm font-medium text-gray-400 block mb-1">
+                                                        Introduce la pérdida de Cordura ({currentStepData.lossAmountString}):
+                                                    </Label>
+                                                    <Input
+                                                        id="sanity-loss-input"
+                                                        type="number" min="0"
+                                                        value={currentSanityLossInput}
+                                                        onChange={(e) => setCurrentSanityLossInput(e.target.value)}
+                                                        className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-yellow-500 focus:ring-yellow-500 w-full text-center h-10 text-lg"
+                                                        placeholder="Pérdida SAN" autoFocus disabled={isConfirmingLoss}
+                                                    />
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* --- Footer Condicional --- */}
+                                        <AlertDialogFooter>
+                                             {pauseInfo?.type === 'episode' && (
+                                                <AlertDialogAction className="bg-green-700 hover:bg-green-600" onClick={() => console.log('TODO: Llamar handleAcknowledgePause')}>
+                                                    Episodio Anotado / Continuar
+                                                </AlertDialogAction>
+                                            )}
+                                            {pauseInfo?.type === 'temp_int_check' && (
+                                                <div className="flex gap-2 w-full justify-end">
+                                                      <Button size="sm" variant="outline" className="text-xs bg-red-800 hover:bg-red-700 h-8 px-3 border-red-600" onClick={() => console.log('TODO: Llamar handleResolveTempIntCheck(true)')}>
+                                                          Superada (Loco)
+                                                      </Button>
+                                                      <Button size="sm" variant="outline" className="text-xs bg-green-700 hover:bg-green-600 h-8 px-3 border-green-600" onClick={() => console.log('TODO: Llamar handleResolveTempIntCheck(false)')}>
+                                                          Fallada (Reprimida)
+                                                      </Button>
+                                                </div>
+                                            )}
+                                             {pauseInfo?.type === 'indef_confirm' && (
+                                                 <AlertDialogAction className="bg-purple-700 hover:bg-purple-600" onClick={() => console.log('TODO: Llamar handleResolveIndefConfirm')}>
+                                                     Confirmar Locura Indefinida y Episodio
+                                                 </AlertDialogAction>
+                                            )}
+                                            {!pauseInfo && ( // Botón Confirmar Pérdida si no hay pausa
+                                                <AlertDialogAction
+                                                    className={cn("bg-yellow-700 hover:bg-yellow-600 flex items-center justify-center gap-2", isConfirmingLoss && "opacity-75 cursor-not-allowed")}
+                                                    onClick={handleConfirmSanityLoss} disabled={isConfirmingLoss}
+                                                >
+                                                    {isConfirmingLoss ? ( <><Loader2 className="h-4 w-4 animate-spin" /> Procesando...</> ) : ( "Confirmar Pérdida" )}
+                                                </AlertDialogAction>
+                                            )}
+                                        </AlertDialogFooter>
+                                    </>
+                                );
+                            })()}
                         </AlertDialogContent>
                     )}
                     {/* Podríamos poner un fallback aquí si sequenceData está vacío, pero no debería ocurrir si la lógica de inicio es correcta */}
