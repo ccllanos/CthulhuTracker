@@ -676,28 +676,24 @@ const CthulhuTracker = () => {
     const handleConfirmGroupSanityLoss = () => {
         if (currentGroupSanityPlayerIndex === null) return;
 
-        // 1. Validar input (igual que antes)
+        // 1. Validar input (igual)
         const lossAmountStr = currentGroupSanityLossInput.trim();
-        if (lossAmountStr === '' || isNaN(parseInt(lossAmountStr, 10))) {
-            alert("Error: Debes introducir una cantidad numérica válida para la pérdida de SAN."); return;
-        }
+        if (lossAmountStr === '' || isNaN(parseInt(lossAmountStr, 10))) { alert("Error: Input numérico requerido."); return; }
         const lossAmount = parseInt(lossAmountStr, 10);
-        if (lossAmount < 0) {
-             alert("Error: La pérdida de SAN no puede ser negativa."); return;
-        }
+        if (lossAmount < 0) { alert("Error: Pérdida no puede ser negativa."); return; }
 
-        // 2. Obtener jugador actual (igual que antes)
+        // 2. Obtener jugador actual (igual)
         const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
         const playerKey = activePlayerKeys[currentGroupSanityPlayerIndex];
-        if (!playerKey || !players[playerKey]) {
-             console.error("Error interno: Jugador no encontrado."); setIsGroupSanityCheckActive(false); setCurrentGroupSanityPlayerIndex(null); return;
-        }
+        if (!playerKey || !players[playerKey]) { console.error("Error interno: Jugador no encontrado."); setIsGroupSanityCheckActive(false); setCurrentGroupSanityPlayerIndex(null); return; }
         const player = players[playerKey];
         const currentSanity = player.stats.cordura;
         const delta = lossAmount;
 
-        // 3. Aplicar pérdida (la llamada a setPlayers es igual, pero la lógica POSTERIOR cambia)
+        // 3. Aplicar pérdida (Llamada a setPlayers)
+        let stateUpdated = false; // Flag para saber si llamamos a setPlayers
         if (delta > 0 && !player.statuses.muerto) {
+            stateUpdated = true;
             setPlayers(prevPlayers => {
                 const stateBeforeUpdate = prevPlayers[playerKey];
                 if (!stateBeforeUpdate || stateBeforeUpdate.statuses.muerto) return prevPlayers;
@@ -708,55 +704,70 @@ const CthulhuTracker = () => {
                 let nextStatuses = { ...stateBeforeUpdate.statuses };
                 let sessionLossBeforeThisEvent = stateBeforeUpdate.sanityLostThisSession;
                 let finalSessionLossToStore = sessionLossBeforeThisEvent;
-                let shouldTriggerBout = false; // Resetear shouldTriggerBout para este jugador
-                const alerts: string[] = [];
-
+                const alerts: string[] = []; // Alertas específicas de la actualización
                 const updatedTotalSessionLoss = sessionLossBeforeThisEvent + delta;
-                const sanityBeforeThisEvent = currentSanity;
-                const indefiniteThreshold = Math.floor(sanityBeforeThisEvent / 5);
+                const sanityBeforeEvent = currentSanity;
+                const indefThreshold = Math.floor(sanityBeforeEvent / 5);
 
+                // Lógica de activación de chequeos pendientes (sin mostrar alertas aquí todavía)
+                let pendingCheckTriggered = false;
                 if (stateBeforeUpdate.statuses.locuraSubyacente && !nextStatuses.locuraTemporal && !nextStatuses.locuraIndefinida) {
-                    shouldTriggerBout = true; alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): ¡NUEVO EPISODIO DE LOCURA! (Perdió ${delta} SAN mientras estaba en Locura Subyacente).`);
-                }
-                else if (updatedTotalSessionLoss >= indefiniteThreshold && !nextStatuses.locuraIndefinida) {
+                    // Activa Bout of Madness directamente, no es un 'pending check' que pause aquí.
+                    // La alerta del Bout se maneja en otro lado.
+                } else if (updatedTotalSessionLoss >= indefThreshold && !nextStatuses.locuraIndefinida) {
                      if (nextStatuses.locuraTemporal) nextStatuses.locuraTemporal = false; if (nextStatuses.locuraSubyacente) nextStatuses.locuraSubyacente = false;
-                    nextPendingChecks.needsIndefiniteInsanityConfirmation = true; alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): ¡LOCURA INDEFINIDA DESENCADENADA! (...)`); // Mensaje abreviado
-                }
-                else if (delta >= 5 && !nextStatuses.locuraTemporal && !nextStatuses.locuraIndefinida && !nextStatuses.locuraSubyacente) {
+                    nextPendingChecks.needsIndefiniteInsanityConfirmation = true;
+                    pendingCheckTriggered = true; // Marcar que se activó un chequeo
+                    alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): ¡LOCURA INDEFINIDA DESENCADENADA! (...)`);
+                } else if (delta >= 5 && !nextStatuses.locuraTemporal && !nextStatuses.locuraIndefinida && !nextStatuses.locuraSubyacente) {
                      if (nextStatuses.locuraSubyacente) nextStatuses.locuraSubyacente = false;
-                    nextPendingChecks.needsTempInsanityIntCheck = true; alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): Posible LOCURA TEMPORAL (...)`); // Mensaje abreviado
+                    nextPendingChecks.needsTempInsanityIntCheck = true;
+                    pendingCheckTriggered = true; // Marcar que se activó un chequeo
+                    alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): Posible LOCURA TEMPORAL (...)`);
                 }
                 finalSessionLossToStore = updatedTotalSessionLoss;
 
-                if (alerts.length > 0 && !shouldTriggerBout) { // Mostrar alertas solo si no hay bout inminente (el bout tiene su propio modal)
-                    setTimeout(() => alert(alerts.join('\n\n---\n')), 10); // Pequeño delay para no solapar
+                // Mostrar alertas informativas generales (si las hubiera y no son de pausa inminente)
+                if (alerts.length > 0 && !pendingCheckTriggered) {
+                     setTimeout(() => alert(alerts.join('\n\n---\n')), 10);
                 }
-                 // No llamar a triggerBoutOfMadness aquí, se maneja por confirmStatusUpdate
 
                 return { ...prevPlayers, [playerKey]: { ...stateBeforeUpdate, stats: nextStats, sanityLostThisSession: finalSessionLossToStore, statuses: nextStatuses, pendingChecks: nextPendingChecks } };
             });
-             if (selectedPlayer === playerKey) { setStatInputs(prev => ({...prev, cordura: String(Math.max(0, currentSanity - delta))})); }
+
+            // Actualizar input visual si es el jugador seleccionado
+             if (selectedPlayer === playerKey) {
+                setStatInputs(prev => ({...prev, cordura: String(Math.max(0, currentSanity - delta))}));
+             }
         }
 
-        // 4. *** NUEVO: Comprobación de Pausa y Avance dentro de setTimeout ***
+        // 4. Decidir Pausa o Avance DESPUÉS de la actualización de estado (dentro de setTimeout)
         setTimeout(() => {
-            // Volver a obtener el estado del jugador DESPUÉS del timeout
+            // Leer el estado MÁS RECIENTE del jugador DENTRO del timeout
             const updatedPlayerState = players[playerKey];
-            if (!updatedPlayerState) { console.error("Error fatal: Jugador desapareció después de update."); return; } // Seguridad
 
+            // Si el jugador no existe (error inesperado), abortar
+            if (!updatedPlayerState) {
+                console.error(`Error fatal: Jugador ${playerKey} no encontrado después de la actualización.`);
+                setIsGroupSanityCheckActive(false); setCurrentGroupSanityPlayerIndex(null); setIsGroupSanityPaused(false); setGroupSanityPausedPlayerKey(null);
+                return;
+            }
+
+            // Verificar si la condición de pausa existe AHORA
             const requiresPause = updatedPlayerState.pendingChecks.needsTempInsanityIntCheck ||
                                   updatedPlayerState.pendingChecks.needsIndefiniteInsanityConfirmation;
 
             if (requiresPause) {
+                // PAUSAR: Actualizar estados de pausa y mostrar alerta
                 setIsGroupSanityPaused(true);
                 setGroupSanityPausedPlayerKey(playerKey);
                 setCurrentGroupSanityLossInput(""); // Limpiar input
                 alert(`¡PAUSA! El chequeo grupal se detiene.\n\nInvestigador: ${updatedPlayerState.personaje}\nAcción Requerida: Resuelve el chequeo pendiente de Locura en su ficha.\n\nLuego pulsa "Reanudar Chequeo".`);
-                // No se avanza al siguiente jugador
+                // NO avanzar al siguiente jugador
             } else {
-                // --- Lógica de avance (solo si no hay pausa) ---
-                setCurrentGroupSanityLossInput(""); // Resetear input
-                const currentIdx = activePlayerKeys.findIndex(key => key === playerKey); // Re-calcular índice por si acaso
+                // AVANZAR: Limpiar input y pasar al siguiente o finalizar
+                setCurrentGroupSanityLossInput("");
+                const currentIdx = activePlayerKeys.findIndex(key => key === playerKey);
                 const nextIndex = currentIdx + 1;
 
                 if (nextIndex < activePlayerKeys.length) {
@@ -764,13 +775,15 @@ const CthulhuTracker = () => {
                     setCurrentGroupSanityPlayerIndex(nextIndex);
                     setSelectedPlayer(nextPlayerKey);
                 } else {
+                    // Finalizar
                     setIsGroupSanityCheckActive(false);
                     setCurrentGroupSanityPlayerIndex(null);
                     setGroupSanityPlayerRolls({});
                     alert("Chequeo de Cordura Grupal Completado.");
                 }
             }
-        }, 0); // setTimeout con 0ms de retraso
+        }, 0); // setTimeout 0ms para poner esta lógica al final de la cola de eventos
+
     };
 
     const handleResumeGroupSanityCheck = () => {
