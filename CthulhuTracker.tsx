@@ -692,6 +692,8 @@ const CthulhuTracker = () => {
         }
     });
 
+    console.log("Secuencia de actualización preparada:", updateSequence);
+
         // TODO: Implementar lógica de comparación y secuencia de actualización
 
         setIsSanityCheckModalOpen(false); // Cerrar el modal
