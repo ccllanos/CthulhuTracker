@@ -895,79 +895,6 @@ const CthulhuTracker = () => {
                      </Select>
                      <Button onClick={handleAddPlayer} className="w-full sm:w-auto bg-green-700 hover:bg-green-600 text-gray-100 px-6">Añadir Investigador</Button>
                  </div>
-                {/* --- Sección de Procesamiento Grupal de Cordura --- */}
-                 {isGroupSanityCheckActive && currentGroupSanityPlayerIndex !== null && (
-                     <div className="my-6 p-4 border-2 border-purple-600 bg-purple-900/20 rounded-lg shadow-lg animate-pulse">
-                         <h3 className="text-xl font-semibold text-purple-300 mb-3 text-center flex items-center justify-center gap-2">
-                             <BrainCircuit size={22} /> Procesando Chequeo de Cordura...
-                         </h3>
-                                                  {(() => { // IIFE para lógica de renderizado compleja
-                            if (currentGroupSanityPlayerIndex === null) return null; // Seguridad
-                            const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
-                            const playerKey = activePlayerKeys[currentGroupSanityPlayerIndex];
-                            if (!playerKey || !players[playerKey]) return <p className="text-center text-red-500">Error: Jugador no encontrado.</p>; // Seguridad
-
-                            const playerData = players[playerKey];
-                            const playerRoll = parseInt(groupSanityPlayerRolls[playerKey] || "999", 10); // Parsear tirada, default alto para fallo seguro
-                            const targetSanity = playerData.stats.cordura;
-                            const success = !isNaN(playerRoll) && playerRoll <= targetSanity;
-                            const lossDescription = success ? groupSanityLossSuccessInput : groupSanityLossFailureInput;
-
-                            return (
-                                <div className="text-center space-y-3">
-                                    {/* --- Mostrar información del jugador siempre --- */}
-                                    <p className="text-lg font-medium text-gray-200">{playerData.personaje}</p>
-                                    <p className="text-sm text-gray-400">
-                                        Tirada SAN: <span className="font-bold text-gray-100">{groupSanityPlayerRolls[playerKey]}</span> vs <span className="font-bold text-gray-100">{targetSanity}</span>
-                                    </p>
-                                    <p className={`text-lg font-bold ${success ? 'text-green-400' : 'text-red-400'}`}>
-                                        {success ? 'ÉXITO' : 'FALLO'}
-                                    </p>
-                                    <p className="text-md text-gray-300">
-                                        Pérdida de Cordura: <span className="font-semibold text-yellow-400">{lossDescription}</span>
-                                    </p>
-
-                                    {/* --- Sección Condicional: Pausado vs Activo --- */}
-                                    {isGroupSanityPaused && groupSanityPausedPlayerKey === playerKey ? (
-                                        // Estado Pausado
-                                        <div className="mt-3 pt-3 border-t border-yellow-600/50 space-y-2">
-                                            <p className="text-yellow-400 font-semibold text-lg flex items-center justify-center gap-2">
-                                                <AlertTriangle size={18} /> ¡PAUSADO!
-                                            </p>
-                                            <p className="text-sm text-yellow-200">
-                                                Resuelve el chequeo de locura pendiente para <span className="font-bold">{playerData.personaje}</span> en su ficha.
-                                            </p>
-                                            <Button
-                                                onClick={handleResumeGroupSanityCheck} // Llamar a la nueva función
-                                                className="bg-yellow-600 hover:bg-yellow-500 text-black h-8 px-3 text-sm mt-2"
-                                                size="sm"
-                                            >
-                                                Reanudar Chequeo
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        // Estado Activo (Input + Botón Confirmar)
-                                        <div className="flex justify-center items-center gap-2 pt-2">
-                                            <Label htmlFor="currentSanLoss" className="text-sm text-gray-400">Introduce pérdida:</Label>
-                                            <Input
-                                                id="currentSanLoss"
-                                                type="text" inputMode="numeric" pattern="[0-9]*"
-                                                value={currentGroupSanityLossInput}
-                                                onChange={(e) => setCurrentGroupSanityLossInput(e.target.value.replace(/[^0-9]/g, ''))}
-                                                className="bg-gray-800 border-gray-600 h-8 w-20 text-center focus:border-purple-500 focus:ring-purple-500"
-                                                placeholder="#" autoFocus
-                                            />
-                                            <Button onClick={handleConfirmGroupSanityLoss} className="bg-purple-600 hover:bg-purple-500 h-8 px-3 text-sm">
-                                                Confirmar y Siguiente
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                         })()}
-                     </div>
-                 )}
-                 {/* --- Fin Sección de Procesamiento --- */}
                  {/* Player Detail Section */}
                  {currentPlayer && selectedPlayer && (
                      <div key={selectedPlayer} className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 transition-all duration-300 ease-in-out">
@@ -1232,7 +1159,81 @@ const CthulhuTracker = () => {
 
                          {/* --- Contenido del procesamiento (se moverá aquí) --- */}
                          <div className="py-4">
-                            {/* El contenido actual irá aquí */}
+                            {(() => { // IIFE para lógica de renderizado compleja
+                                if (currentGroupSanityPlayerIndex === null) return null; // Seguridad
+                                const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
+                                // Añadir chequeo por si no hay jugadores activos (aunque no debería ocurrir si isGroupSanityCheckActive es true)
+                                if (activePlayerKeys.length === 0) {
+                                    console.warn("Modal de procesamiento activo sin jugadores activos.");
+                                    // Podríamos cerrar el modal aquí si fuera necesario:
+                                    // setTimeout(() => setIsGroupSanityCheckActive(false), 0);
+                                    return <p className="text-center text-gray-400">No hay jugadores activos.</p>;
+                                }
+                                // Asegurarse de que el índice es válido para el array actual
+                                if (currentGroupSanityPlayerIndex >= activePlayerKeys.length) {
+                                    console.error(`Índice ${currentGroupSanityPlayerIndex} fuera de rango para ${activePlayerKeys.length} jugadores activos.`);
+                                     // Forzar finalización o resetear índice podría ser una opción aquí.
+                                    // setTimeout(() => { setIsGroupSanityCheckActive(false); setCurrentGroupSanityPlayerIndex(null); }, 0);
+                                    return <p className="text-center text-red-500">Error: Índice de jugador inválido.</p>;
+                                }
+
+                                const playerKey = activePlayerKeys[currentGroupSanityPlayerIndex];
+                                if (!playerKey || !players[playerKey]) return <p className="text-center text-red-500">Error: Jugador no encontrado.</p>; // Seguridad
+
+                                const playerData = players[playerKey];
+                                const playerRoll = parseInt(groupSanityPlayerRolls[playerKey] || "999", 10);
+                                const targetSanity = playerData.stats.cordura;
+                                const success = !isNaN(playerRoll) && playerRoll <= targetSanity;
+                                const lossDescription = success ? groupSanityLossSuccessInput : groupSanityLossFailureInput;
+
+                                return (
+                                    <div className="text-center space-y-3">
+                                        {/* --- Mostrar información del jugador siempre --- */}
+                                        <p className="text-lg font-medium text-gray-200">{playerData.personaje}</p>
+                                        <p className="text-sm text-gray-400">
+                                            Tirada SAN: <span className="font-bold text-gray-100">{groupSanityPlayerRolls[playerKey]}</span> vs <span className="font-bold text-gray-100">{targetSanity}</span>
+                                        </p>
+                                        <p className={`text-lg font-bold ${success ? 'text-green-400' : 'text-red-400'}`}>
+                                            {success ? 'ÉXITO' : 'FALLO'}
+                                        </p>
+                                        <p className="text-md text-gray-300">
+                                            Pérdida de Cordura: <span className="font-semibold text-yellow-400">{lossDescription}</span>
+                                        </p>
+
+                                        {/* --- Sección Condicional: Pausado vs Activo --- */}
+                                        {isGroupSanityPaused && groupSanityPausedPlayerKey === playerKey ? (
+                                            // Estado Pausado
+                                            <div className="mt-3 pt-3 border-t border-yellow-600/50 space-y-2">
+                                                <p className="text-yellow-400 font-semibold text-lg flex items-center justify-center gap-2">
+                                                    <AlertTriangle size={18} /> ¡PAUSADO!
+                                                </p>
+                                                <p className="text-sm text-yellow-200">
+                                                    Resuelve el chequeo de locura pendiente para <span className="font-bold">{playerData.personaje}</span> en su ficha.
+                                                </p>
+                                                <Button onClick={handleResumeGroupSanityCheck} className="bg-yellow-600 hover:bg-yellow-500 text-black h-8 px-3 text-sm mt-2" size="sm">
+                                                    Reanudar Chequeo
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            // Estado Activo (Input + Botón Confirmar)
+                                            <div className="flex justify-center items-center gap-2 pt-2">
+                                                <Label htmlFor="currentSanLoss" className="text-sm text-gray-400">Introduce pérdida:</Label>
+                                                <Input
+                                                    id="currentSanLoss"
+                                                    type="text" inputMode="numeric" pattern="[0-9]*"
+                                                    value={currentGroupSanityLossInput}
+                                                    onChange={(e) => setCurrentGroupSanityLossInput(e.target.value.replace(/[^0-9]/g, ''))}
+                                                    className="bg-gray-800 border-gray-600 h-8 w-20 text-center focus:border-purple-500 focus:ring-purple-500"
+                                                    placeholder="#" autoFocus
+                                                />
+                                                <Button onClick={handleConfirmGroupSanityLoss} className="bg-purple-600 hover:bg-purple-500 h-8 px-3 text-sm">
+                                                    Confirmar y Siguiente
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                             })()}
                          </div>
                          {/* --- Fin Contenido --- */}
 
