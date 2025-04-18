@@ -1294,8 +1294,8 @@ const CthulhuTracker = () => {
                                                                      {episodeInfo ? (
                                                                          // Botón para continuar después del episodio
                                                                          <AlertDialogAction className="bg-green-700 hover:bg-green-600" onClick={() => console.log('TODO: Crear handleContinueSequenceAfterEpisode')}>
-                                                                             Episodio Anotado / Continuar
-                                                                         </AlertDialogAction>
+                                             Episodio Anotado / Continuar
+                                         </AlertDialogAction>
                                                                      ) : (
                                                                          // Botón para confirmar pérdida (como antes)
                                                                          <AlertDialogAction
