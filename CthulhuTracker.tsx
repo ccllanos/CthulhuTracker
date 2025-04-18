@@ -766,6 +766,27 @@ const CthulhuTracker = () => {
                             [playerKey]: updatedPlayerData
                         };
                     });
+
+                    // Limpiar input para el próximo jugador (o para la próxima vez)
+                    setCurrentSanityLossInput("");
+
+                    // Avanzar al siguiente jugador o finalizar la secuencia
+                    if (currentSequenceIndex >= sequenceData.length - 1) {
+                        // Era el último jugador
+                        console.log("Secuencia de actualización de cordura completada.");
+                        setIsSanityUpdateSequenceActive(false);
+                        setCurrentSequenceIndex(0); // Resetear índice para la próxima vez
+                        setSequenceData([]); // Limpiar datos de secuencia
+                        // Opcional: Resetear selección de jugador si se quiere
+                        // setSelectedPlayer('');
+                    } else {
+                        // Pasar al siguiente jugador
+                        const nextIndex = currentSequenceIndex + 1;
+                        console.log(`Avanzando al siguiente jugador: ${sequenceData[nextIndex].personaje} (Índice ${nextIndex})`);
+                        setCurrentSequenceIndex(nextIndex);
+                        // Opcional: seleccionar automáticamente al siguiente jugador en la UI principal
+                        // setSelectedPlayer(sequenceData[nextIndex].playerKey);
+                    }
         // TODO: Avanzar secuencia (índice o finalizar)
         // TODO: Limpiar currentSanityLossInput
         // Aquí irá la lógica de validación, actualización y avance
