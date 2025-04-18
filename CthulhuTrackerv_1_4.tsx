@@ -225,7 +225,8 @@ const CthulhuTracker = () => {
                     stats: { ...initialStats, ...playerData.stats, salud: Math.min(playerData.stats.salud ?? maxHP, maxHP), cordura: Math.min(playerData.stats.cordura ?? startSAN, maxSAN) },
                     habilidades: playerData.habilidades ?? {}, // Mantener por retrocompatibilidad temporal si es necesario
                     skills: playerData.skills ?? {}, // <<< Añadir skills, inicializar si no existe
-                    skillsNotes: playerData.skillsNotes ?? "", trasfondo: { ...initialTrasfondo, ...(playerData.trasfondo ?? {}) }, inventoryNotes: playerData.inventoryNotes ?? "",
+                    skillsNotes: playerData.skillsNotes ?? "", skillsImageUrl: playerData.skillsImageUrl ?? undefined, // <<< Cargar o inicializar imagen
+                    trasfondo: { ...initialTrasfondo, ...(playerData.trasfondo ?? {}) }, inventoryNotes: playerData.inventoryNotes ?? "",
                     maxSalud: maxHP, maxSanity: maxSAN,
                     sanityLostThisSession: isSessionActive ? (playerData.sanityLostThisSession ?? 0) : 0, // Reset if session wasn't active
                     statuses: initialLoadStatuses, pendingChecks: initialLoadPendingChecks,
@@ -256,7 +257,8 @@ const CthulhuTracker = () => {
                     stats: { ...initialStats, salud: maxHP, cordura: startSAN },
                     habilidades: {}, // Mantener por retrocompatibilidad temporal si es necesario
                     skills: {}, // <<< Inicializar skills como objeto vacío
-                    skillsNotes: "", trasfondo: { ...initialTrasfondo }, inventoryNotes: "",
+                    skillsNotes: "", skillsImageUrl: undefined, // <<< Inicializar imagen
+                    trasfondo: { ...initialTrasfondo }, inventoryNotes: "",
                     maxSalud: maxHP, maxSanity: maxSAN, sanityLostThisSession: 0,
                     statuses: { ...initialStatuses }, pendingChecks: { ...initialPendingChecks },
                 };
@@ -449,7 +451,8 @@ const CthulhuTracker = () => {
                 stats: { ...initialStats, salud: maxHP, cordura: startSAN },
                 habilidades: {}, // Mantener por retrocompatibilidad temporal si es necesario
                 skills: {}, // <<< Inicializar skills como objeto vacío
-                skillsNotes: "", trasfondo: { ...initialTrasfondo }, inventoryNotes: "",
+                skillsNotes: "", skillsImageUrl: undefined, // <<< Inicializar imagen
+                trasfondo: { ...initialTrasfondo }, inventoryNotes: "",
                 maxSalud: maxHP, maxSanity: maxSAN, sanityLostThisSession: 0,
                 statuses: { ...initialStatuses }, pendingChecks: { ...initialPendingChecks },
             },
