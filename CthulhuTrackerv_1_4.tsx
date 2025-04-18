@@ -1201,7 +1201,20 @@ const CthulhuTracker = () => {
                             </div>
                             <AlertDialogFooter>
                                 {/* No hay Cancelar para forzar la secuencia */}
-                                <AlertDialogAction className="bg-yellow-700 hover:bg-yellow-600" onClick={handleConfirmSanityLoss}>Confirmar Pérdida</AlertDialogAction>
+                                <AlertDialogAction
+                                    className={cn("bg-yellow-700 hover:bg-yellow-600 flex items-center justify-center gap-2", isConfirmingLoss && "opacity-75 cursor-not-allowed")}
+                                    onClick={handleConfirmSanityLoss}
+                                    disabled={isConfirmingLoss} // Deshabilitar mientras se confirma
+                                >
+                                    {isConfirmingLoss ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Procesando...
+                                        </>
+                                    ) : (
+                                        "Confirmar Pérdida"
+                                    )}
+                                </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     )}
