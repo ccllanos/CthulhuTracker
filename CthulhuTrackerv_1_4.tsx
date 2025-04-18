@@ -1202,25 +1202,48 @@ const CthulhuTracker = () => {
 
                                         {/* --- Sección Condicional: Pausado vs Activo --- */}
                                         {isGroupSanityPaused && groupSanityPausedPlayerKey === playerKey ? (
-                                            // Estado Pausado
-                                            <div className="mt-3 pt-3 border-t border-yellow-600/50 space-y-2">
+                                            // --- Estado Pausado ---
+                                            <div className="mt-3 pt-3 border-t border-yellow-600/50 space-y-3">
                                                 <p className="text-yellow-400 font-semibold text-lg flex items-center justify-center gap-2">
                                                     <AlertTriangle size={18} /> ¡PAUSADO!
                                                 </p>
-                                                <p className="text-sm text-yellow-200">
-                                                    Resuelve el chequeo de locura pendiente para <span className="font-bold">{playerData.personaje}</span> en su ficha.
+                                                <p className="text-sm text-yellow-200 px-2">
+                                                    Resolver chequeo pendiente para <span className="font-bold">{playerData.personaje}</span>:
+                                                </p>
+
+                                                {/* --- Botones de Resolución (Condicionales) --- */}
+                                                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-2">
+                                                    {playerData.pendingChecks.needsTempInsanityIntCheck && (
+                                                        <>
+                                                            <span className="text-sm text-gray-300 flex-grow text-center sm:text-left">Tira INT vs {playerData.stats.inteligencia}:</span>
+                                                            <div className="flex gap-1 flex-shrink-0">
+                                                                <Button size="sm" variant="ghost" className="text-xs bg-red-800 hover:bg-red-700 h-7 px-2" onClick={() => handleTempInsanityIntCheckResult(playerKey, true)}>Superada (Loco)</Button>
+                                                                <Button size="sm" variant="ghost" className="text-xs bg-green-700 hover:bg-green-600 h-7 px-2" onClick={() => handleTempInsanityIntCheckResult(playerKey, false)}>Fallada (Reprimida)</Button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    {playerData.pendingChecks.needsIndefiniteInsanityConfirmation && (
+                                                        <>
+                                                            <span className="text-sm text-gray-300 flex-grow text-center sm:text-left">{`Confirmar Locura Indefinida (${playerData.sanityLostThisSession} SAN perdido).`}</span>
+                                                            <Button size="sm" variant="ghost" className="text-xs bg-purple-700 hover:bg-purple-600 h-7 px-2" onClick={() => confirmIndefiniteInsanity(playerKey)}>Confirmar y Episodio</Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                {/* --- Fin Botones Resolución --- */}
+
+                                                <p className="text-xs text-gray-400 pt-2">
+                                                    Tras resolver, pulsa Reanudar.
                                                 </p>
                                                 <Button onClick={handleResumeGroupSanityCheck} className="bg-yellow-600 hover:bg-yellow-500 text-black h-8 px-3 text-sm mt-2" size="sm">
                                                     Reanudar Chequeo
                                                 </Button>
                                             </div>
                                         ) : (
-                                            // Estado Activo (Input + Botón Confirmar)
+                                            // --- Estado Activo (Input + Botón Confirmar) ---
                                             <div className="flex justify-center items-center gap-2 pt-2">
                                                 <Label htmlFor="currentSanLoss" className="text-sm text-gray-400">Introduce pérdida:</Label>
                                                 <Input
-                                                    id="currentSanLoss"
-                                                    type="text" inputMode="numeric" pattern="[0-9]*"
+                                                    id="currentSanLoss" type="text" inputMode="numeric" pattern="[0-9]*"
                                                     value={currentGroupSanityLossInput}
                                                     onChange={(e) => setCurrentGroupSanityLossInput(e.target.value.replace(/[^0-9]/g, ''))}
                                                     className="bg-gray-800 border-gray-600 h-8 w-20 text-center focus:border-purple-500 focus:ring-purple-500"
