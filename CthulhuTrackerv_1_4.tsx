@@ -1403,7 +1403,7 @@ const CthulhuTracker = () => {
                                                       <Button size="sm" variant="outline" className="text-xs bg-red-800 hover:bg-red-700 h-8 px-3 border-red-600" onClick={() => handleResolveTempIntCheck(true)}>
                                                           Superada (Loco)
                                                       </Button>
-                                                      <Button size="sm" variant="outline" className="text-xs bg-green-700 hover:bg-green-600 h-8 px-3 border-green-600" onClick={() => console.log('TODO: Llamar handleResolveTempIntCheck(false)')}>
+                                                      <Button size="sm" variant="outline" className="text-xs bg-green-700 hover:bg-green-600 h-8 px-3 border-green-600" onClick={() => handleResolveTempIntCheck(false)}>
                                                           Fallada (Reprimida)
                                                       </Button>
                                                 </div>
