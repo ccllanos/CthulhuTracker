@@ -657,6 +657,23 @@ const CthulhuTracker = () => {
         console.log("Pérdida Éxito:", sanityCheckSuccessLoss);
         console.log("Pérdida Fallo:", sanityCheckFailureLoss);
         console.log("Resultados Tiradas:", sanityCheckRolls);
+        
+        const activePlayers = Object.entries(players)
+        .filter(([/*key*/, player]) => !player.statuses.muerto); // Obtener jugadores activos
+
+    console.log("Jugadores activos para el chequeo:", activePlayers.map(([key]) => key)); // Opcional: Mostrar llaves
+
+    activePlayers.forEach(([playerKey, playerData]) => {
+        const rollString = sanityCheckRolls[playerKey] ?? ''; // Obtener string de tirada
+        const roll = parseInt(rollString, 10); // Convertir a número
+        const currentSanity = playerData.stats.cordura; // Obtener cordura actual
+
+        if (!isNaN(roll) && roll >= 1 && roll <= 100) { // Validar tirada
+            console.log(`-> ${playerData.personaje}: Tiró ${roll}, Cordura Actual ${currentSanity}`);
+        } else {
+             console.log(`-> ${playerData.personaje}: Tirada inválida o no ingresada ('${rollString}').`);
+        }
+    });
 
         // TODO: Implementar lógica de comparación y secuencia de actualización
 
