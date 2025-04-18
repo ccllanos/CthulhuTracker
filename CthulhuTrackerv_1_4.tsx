@@ -183,6 +183,7 @@ const CthulhuTracker = () => {
     const [currentSequenceIndex, setCurrentSequenceIndex] = useState<number>(0);
     const [currentSanityLossInput, setCurrentSanityLossInput] = useState<string>("");
     const [isConfirmingLoss, setIsConfirmingLoss] = useState<boolean>(false);
+    const [currentEpisodeTriggered, setCurrentEpisodeTriggered] = useState<{ playerKey: string; boutText: string; } | null>(null);
     const isProcessingBlur = useRef<Record<string, boolean>>({});
     const initialLoadComplete = useRef<boolean>(false); // Ref to track initial load
 
