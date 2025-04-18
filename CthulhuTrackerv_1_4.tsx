@@ -1236,21 +1236,32 @@ const CthulhuTracker = () => {
                             return (
                                 <>
                                     {/* Contenido Principal Condicional */}
-                                    <div className="my-4 space-y-3">
-                                <Label htmlFor="sanity-loss-input" className="text-sm font-medium text-gray-400 block mb-1">
-                                    Introduce la pérdida de Cordura ({sequenceData[currentSequenceIndex].lossAmountString}):
-                                </Label>
-                                <Input
-                                    id="sanity-loss-input"
-                                    type="number"
-                                    min="0"
-                                    value={currentSanityLossInput}
-                                    onChange={(e) => setCurrentSanityLossInput(e.target.value)}
-                                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-yellow-500 focus:ring-yellow-500 w-full text-center h-10 text-lg"
-                                    placeholder="Pérdida SAN"
-                                    autoFocus // Enfocar automáticamente este input
-                                />
-                            </div>
+                                    {episodeInfo ? (
+                                         // Mostrar Información del Episodio
+                                         <div className="p-3 bg-red-900/30 border border-red-700 rounded-md">
+                                             <h4 className="text-red-400 font-semibold mb-2">¡Episodio de Locura Desencadenado!</h4>
+                                             <p className="text-sm text-gray-200 whitespace-pre-wrap">{episodeInfo.boutText}</p>
+                                         </div>
+                                     ) : (
+                                         // Mostrar Input de Pérdida SAN (como antes)
+                                         <>
+                                             <Label htmlFor="sanity-loss-input" className="text-sm font-medium text-gray-400 block mb-1">
+                                                 Introduce la pérdida de Cordura ({currentStepData.lossAmountString}):
+                                             </Label>
+                                             <Input
+                                                 id="sanity-loss-input"
+                                                 type="number"
+                                                 min="0"
+                                                 value={currentSanityLossInput}
+                                                 onChange={(e) => setCurrentSanityLossInput(e.target.value)}
+                                                 className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-yellow-500 focus:ring-yellow-500 w-full text-center h-10 text-lg"
+                                                 placeholder="Pérdida SAN"
+                                                 autoFocus
+                                                 disabled={isConfirmingLoss} // Deshabilitar mientras se confirma
+                                             />
+                                         </>
+                                     )}
+                                     </div>
                             <AlertDialogFooter>
                                 {/* No hay Cancelar para forzar la secuencia */}
                                 <AlertDialogAction
