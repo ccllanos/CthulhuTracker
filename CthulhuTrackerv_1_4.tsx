@@ -221,7 +221,9 @@ const CthulhuTracker = () => {
                 acc[key] = {
                     ...playerData,
                     stats: { ...initialStats, ...playerData.stats, salud: Math.min(playerData.stats.salud ?? maxHP, maxHP), cordura: Math.min(playerData.stats.cordura ?? startSAN, maxSAN) },
-                    habilidades: playerData.habilidades ?? {}, skillsNotes: playerData.skillsNotes ?? "", trasfondo: { ...initialTrasfondo, ...(playerData.trasfondo ?? {}) }, inventoryNotes: playerData.inventoryNotes ?? "",
+                    habilidades: playerData.habilidades ?? {}, // Mantener por retrocompatibilidad temporal si es necesario
+                    skills: playerData.skills ?? {}, // <<< Añadir skills, inicializar si no existe
+                    skillsNotes: playerData.skillsNotes ?? "", trasfondo: { ...initialTrasfondo, ...(playerData.trasfondo ?? {}) }, inventoryNotes: playerData.inventoryNotes ?? "",
                     maxSalud: maxHP, maxSanity: maxSAN,
                     sanityLostThisSession: isSessionActive ? (playerData.sanityLostThisSession ?? 0) : 0, // Reset if session wasn't active
                     statuses: initialLoadStatuses, pendingChecks: initialLoadPendingChecks,
@@ -250,7 +252,9 @@ const CthulhuTracker = () => {
                 acc[key] = {
                     nombre: `Jugador ${num}`, personaje: `Personaje ${num}`,
                     stats: { ...initialStats, salud: maxHP, cordura: startSAN },
-                    habilidades: {}, skillsNotes: "", trasfondo: { ...initialTrasfondo }, inventoryNotes: "",
+                    habilidades: {}, // Mantener por retrocompatibilidad temporal si es necesario
+                    skills: {}, // <<< Inicializar skills como objeto vacío
+                    skillsNotes: "", trasfondo: { ...initialTrasfondo }, inventoryNotes: "",
                     maxSalud: maxHP, maxSanity: maxSAN, sanityLostThisSession: 0,
                     statuses: { ...initialStatuses }, pendingChecks: { ...initialPendingChecks },
                 };
@@ -441,7 +445,9 @@ const CthulhuTracker = () => {
             [newPlayerKey]: {
                 nombre: `Jugador ${nextPlayerNumber}`, personaje: `Personaje ${nextPlayerNumber}`,
                 stats: { ...initialStats, salud: maxHP, cordura: startSAN },
-                habilidades: {}, skillsNotes: "", trasfondo: { ...initialTrasfondo }, inventoryNotes: "",
+                habilidades: {}, // Mantener por retrocompatibilidad temporal si es necesario
+                skills: {}, // <<< Inicializar skills como objeto vacío
+                skillsNotes: "", trasfondo: { ...initialTrasfondo }, inventoryNotes: "",
                 maxSalud: maxHP, maxSanity: maxSAN, sanityLostThisSession: 0,
                 statuses: { ...initialStatuses }, pendingChecks: { ...initialPendingChecks },
             },
