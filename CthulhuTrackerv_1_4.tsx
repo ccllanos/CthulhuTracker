@@ -648,15 +648,21 @@ const CthulhuTracker = () => {
      };
 
      const triggerBoutOfMadness = (playerKey: string, insanityType: 'locuraTemporal' | 'locuraIndefinida' | 'locuraSubyacente') => {
-        const player = players[playerKey]; if (!player || player.statuses.muerto) return;
+        const player = players[playerKey]; if (!player || player.statuses.muerto) return; // Retorna undefined si no aplica
         const roll = Math.floor(Math.random() * 10); const resultText = BOUTS_OF_MADNESS_REALTIME[roll];
         let duration = '';
          if (insanityType === 'locuraTemporal') duration = '1D10 horas';
          else if (insanityType === 'locuraIndefinida') duration = 'meses (hasta curación)';
          else if (insanityType === 'locuraSubyacente') duration = 'hasta curación (Indef.) o fin (Temp.)';
 
-        setBoutOfMadnessResult(`¡Episodio de Locura para ${player.personaje}!\n\nResultado (1D10 = ${roll + 1}): ${resultText}\n\n(${insanityType === 'locuraTemporal' ? 'Locura Temporal' : insanityType === 'locuraIndefinida' ? 'Locura Indefinida' : 'Locura Subyacente'} - Duración estado subyacente: ${duration})`);
-        setIsBoutOfMadnessAlertOpen(true);
+        // Construir el texto completo del episodio
+        const boutText = `¡Episodio de Locura para ${player.personaje}!\n\nResultado (1D10 = ${roll + 1}): ${resultText}\n\n(${insanityType === 'locuraTemporal' ? 'Locura Temporal' : insanityType === 'locuraIndefinida' ? 'Locura Indefinida' : 'Locura Subyacente'} - Duración estado subyacente: ${duration})`;
+
+        // Quitar la activación directa del alert global desde aquí (se manejará diferente en la secuencia)
+        // setBoutOfMadnessResult(boutText);
+        // setIsBoutOfMadnessAlertOpen(true);
+
+        return boutText; // Devolver el texto generado
      };
 
      const handleProcessSanityCheckInputs = () => {
