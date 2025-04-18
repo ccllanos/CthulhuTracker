@@ -761,6 +761,22 @@ const CthulhuTracker = () => {
         } // Fin if (delta > 0)
 
         // 4. Limpiar input actual y avanzar
+        // *** NUEVO: Verificar si hay locura pendiente y pausar si es necesario ***
+        const currentPlayerStateAfterUpdate = players[playerKey]; // Obtener el estado MÁS RECIENTE
+        const requiresPause = currentPlayerStateAfterUpdate &&
+                              (currentPlayerStateAfterUpdate.pendingChecks.needsTempInsanityIntCheck ||
+                               currentPlayerStateAfterUpdate.pendingChecks.needsIndefiniteInsanityConfirmation);
+
+        if (requiresPause) {
+            setIsGroupSanityPaused(true);
+            setGroupSanityPausedPlayerKey(playerKey);
+            setCurrentGroupSanityLossInput(""); // Limpiar input igual
+            // Mostrar alerta modal o un mensaje prominente sería ideal aquí, pero por ahora usamos alert simple.
+            setTimeout(() => alert(`¡PAUSA! El chequeo grupal se detiene.\n\nInvestigador: ${currentPlayerStateAfterUpdate.personaje}\nAcción Requerida: Resuelve el chequeo pendiente de Locura (Temporal o Indefinida) en su ficha.\n\nLuego pulsa "Reanudar Chequeo".`), 50);
+            return; // Detener la ejecución aquí, no avanzar al siguiente
+        }
+
+        // --- Lógica de avance (solo se ejecuta si no hay pausa) ---
         setCurrentGroupSanityLossInput(""); // Resetear input para el siguiente
         const nextIndex = currentGroupSanityPlayerIndex + 1;
 
