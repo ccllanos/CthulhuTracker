@@ -173,6 +173,9 @@ const CthulhuTracker = () => {
     const [isSessionActive, setIsSessionActive] = useState(false);
     const [isSubyacenteAlertOpen, setIsSubyacenteAlertOpen] = useState(false);
     const [playerPendingSubyacente, setPlayerPendingSubyacente] = useState<string | null>(null);
+    const [isSanityCheckModalOpen, setIsSanityCheckModalOpen] = useState<boolean>(false);
+    const [sanityCheckSuccessLoss, setSanityCheckSuccessLoss] = useState<string>("");
+    const [sanityCheckFailureLoss, setSanityCheckFailureLoss] = useState<string>("");
     const isProcessingBlur = useRef<Record<string, boolean>>({});
     const initialLoadComplete = useRef<boolean>(false); // Ref to track initial load
 
