@@ -832,26 +832,7 @@ const CthulhuTracker = () => {
             };
         }); // Fin de setPlayers
 
-                    // Limpiar input para el próximo jugador (o para la próxima vez)
-                    setCurrentSanityLossInput("");
-
-                    // Avanzar al siguiente jugador o finalizar la secuencia
-                    if (currentSequenceIndex >= sequenceData.length - 1) {
-                        // Era el último jugador
-                        console.log("Secuencia de actualización de cordura completada.");
-                        setIsSanityUpdateSequenceActive(false);
-                        setCurrentSequenceIndex(0); // Resetear índice para la próxima vez
-                        setSequenceData([]); // Limpiar datos de secuencia
-                        // Opcional: Resetear selección de jugador si se quiere
-                        // setSelectedPlayer('');
-                    } else {
-                        // Pasar al siguiente jugador
-                        const nextIndex = currentSequenceIndex + 1;
-                        console.log(`Avanzando al siguiente jugador: ${sequenceData[nextIndex].personaje} (Índice ${nextIndex})`);
-                        setCurrentSequenceIndex(nextIndex);
-                        // Opcional: seleccionar automáticamente al siguiente jugador en la UI principal
-                        setSelectedPlayer(sequenceData[nextIndex].playerKey);
-                    }
+                    
         // TODO: Avanzar secuencia (índice o finalizar)
         // TODO: Limpiar currentSanityLossInput
         // Aquí irá la lógica de validación, actualización y avance
@@ -1288,7 +1269,39 @@ const CthulhuTracker = () => {
             </div>
         </TooltipProvider>
     );
-} finally {
+} 
+        // --- Lógica de Avance/Finalización (Condicionada a si hubo episodio) ---
+        if (!episodeText) {
+            // Solo avanzar si NO se disparó un episodio para este jugador
+            setCurrentSanityLossInput(""); // Limpiar input
+
+            if (currentSequenceIndex >= sequenceData.length - 1) {
+                // Era el último jugador
+                console.log("Secuencia de actualización de cordura completada.");
+                setIsSanityUpdateSequenceActive(false);
+                setCurrentSequenceIndex(0);
+                setSequenceData([]);
+                setSelectedPlayer(playerKey); // Asegurar que el último quede seleccionado
+            } else {
+                // Pasar al siguiente jugador
+                const nextIndex = currentSequenceIndex + 1;
+                console.log(`Avanzando al siguiente jugador: ${sequenceData[nextIndex].personaje} (Índice ${nextIndex})`);
+                setCurrentSequenceIndex(nextIndex);
+                setSelectedPlayer(sequenceData[nextIndex].playerKey);
+            }
+        } else {
+             // Se disparó un episodio, establecer el estado para pausar la secuencia
+             console.log(`Episodio de locura disparado para ${currentStep.personaje}. Pausando secuencia.`);
+             setCurrentEpisodeTriggered({ playerKey: currentStep.playerKey, boutText: episodeText });
+             // La UI mostrará el episodio y un botón para confirmar/continuar
+             // NO limpiamos el input ni avanzamos el índice aquí.
+        }
+        // --- Fin Lógica de Avance/Finalización ---
+
+    } finally {
+        setIsConfirmingLoss(false); // Asegurar que el estado de carga se desactive
+    }
+finally {
     setIsConfirmingLoss(false); // Asegurar que el estado de carga se desactive
 }
 };
