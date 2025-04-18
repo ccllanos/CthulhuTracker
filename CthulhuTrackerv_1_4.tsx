@@ -668,6 +668,109 @@ const CthulhuTracker = () => {
         setCurrentGroupSanityPlayerIndex(0); // Empezar con el primer jugador activo
         // console.log("Iniciando procesamiento grupal con:", { success: groupSanityLossSuccessInput, failure: groupSanityLossFailureInput, rolls: groupSanityPlayerRolls }); // Log para depuración
     };
+
+    const handleConfirmGroupSanityLoss = () => {
+        if (currentGroupSanityPlayerIndex === null) return; // Seguridad
+
+        // 1. Validar input
+        const lossAmountStr = currentGroupSanityLossInput.trim();
+        if (lossAmountStr === '' || isNaN(parseInt(lossAmountStr, 10))) {
+            alert("Error: Debes introducir una cantidad numérica válida para la pérdida de SAN.");
+            return;
+        }
+        const lossAmount = parseInt(lossAmountStr, 10);
+        if (lossAmount < 0) {
+             alert("Error: La pérdida de SAN no puede ser negativa.");
+             return;
+        }
+
+        // 2. Obtener jugador actual
+        const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
+        const playerKey = activePlayerKeys[currentGroupSanityPlayerIndex];
+        if (!playerKey || !players[playerKey]) {
+             console.error("Error interno: No se encontró el jugador actual durante el procesamiento grupal.");
+             setIsGroupSanityCheckActive(false); // Abortar proceso
+             setCurrentGroupSanityPlayerIndex(null);
+             return;
+        }
+        const player = players[playerKey];
+        const currentSanity = player.stats.cordura;
+        const delta = lossAmount; // Pérdida es el input directo
+
+        // 3. Aplicar pérdida y verificar estados (lógica adaptada de handleStatInputBlur)
+        if (delta > 0 && !player.statuses.muerto) {
+            setPlayers(prevPlayers => {
+                const stateBeforeUpdate = prevPlayers[playerKey];
+                if (!stateBeforeUpdate || stateBeforeUpdate.statuses.muerto) return prevPlayers; // Doble chequeo
+
+                const actualNewValue = Math.max(0, currentSanity - delta);
+                let nextStats = { ...stateBeforeUpdate.stats, cordura: actualNewValue };
+                let nextPendingChecks = { ...stateBeforeUpdate.pendingChecks };
+                let nextStatuses = { ...stateBeforeUpdate.statuses };
+                let sessionLossBeforeThisEvent = stateBeforeUpdate.sanityLostThisSession;
+                let finalSessionLossToStore = sessionLossBeforeThisEvent;
+                let shouldTriggerBout = false;
+                const alerts: string[] = [];
+
+                // --- Lógica de Cordura y Locura ---
+                const updatedTotalSessionLoss = sessionLossBeforeThisEvent + delta;
+                const sanityBeforeThisEvent = currentSanity; // Cordura antes de esta pérdida específica
+                const indefiniteThreshold = Math.floor(sanityBeforeThisEvent / 5);
+
+                if (stateBeforeUpdate.statuses.locuraSubyacente && !nextStatuses.locuraTemporal && !nextStatuses.locuraIndefinida) {
+                    shouldTriggerBout = true;
+                    alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): ¡NUEVO EPISODIO DE LOCURA! (Perdió ${delta} SAN mientras estaba en Locura Subyacente).`);
+                }
+                else if (updatedTotalSessionLoss >= indefiniteThreshold && !nextStatuses.locuraIndefinida) {
+                    if (nextStatuses.locuraTemporal) nextStatuses.locuraTemporal = false;
+                    if (nextStatuses.locuraSubyacente) nextStatuses.locuraSubyacente = false;
+                    nextPendingChecks.needsIndefiniteInsanityConfirmation = true;
+                    alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): ¡LOCURA INDEFINIDA DESENCADENADA! (Pérdida acumulada sesión: ${updatedTotalSessionLoss} >= ${indefiniteThreshold} (1/5 de ${sanityBeforeThisEvent} SAN)).\n- Confirma en su ficha para marcar estado y activar Episodio de Locura.`);
+                }
+                else if (delta >= 5 && !nextStatuses.locuraTemporal && !nextStatuses.locuraIndefinida && !nextStatuses.locuraSubyacente) {
+                    if (nextStatuses.locuraSubyacente) nextStatuses.locuraSubyacente = false; // Clear subyacente if temp triggers
+                    nextPendingChecks.needsTempInsanityIntCheck = true;
+                    alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): Posible LOCURA TEMPORAL (Perdió ${delta} SAN en un evento >= 5).\n- Realiza tirada de INT vs ${nextStats.inteligencia} en su ficha. Si la supera, ¡locura!`);
+                }
+                finalSessionLossToStore = updatedTotalSessionLoss;
+                // --- Fin Lógica Cordura ---
+
+                if (alerts.length > 0) { setTimeout(() => alert(alerts.join('\n\n---\n')), 0); }
+
+                // Nota: El triggerBoutOfMadness se maneja separadamente por confirmStatusUpdate si es necesario
+
+                return {
+                    ...prevPlayers,
+                    [playerKey]: {
+                        ...stateBeforeUpdate,
+                        stats: nextStats,
+                        sanityLostThisSession: finalSessionLossToStore,
+                        statuses: nextStatuses,
+                        pendingChecks: nextPendingChecks,
+                    },
+                };
+            });
+             // Actualizar el input del stat 'cordura' en la vista principal si el jugador actual es el seleccionado
+             if (selectedPlayer === playerKey) {
+                setStatInputs(prev => ({...prev, cordura: String(Math.max(0, currentSanity - delta))}));
+             }
+        } // Fin if (delta > 0)
+
+        // 4. Limpiar input actual y avanzar
+        setCurrentGroupSanityLossInput(""); // Resetear input para el siguiente
+        const nextIndex = currentGroupSanityPlayerIndex + 1;
+
+        if (nextIndex < activePlayerKeys.length) {
+            setCurrentGroupSanityPlayerIndex(nextIndex); // Pasar al siguiente jugador
+        } else {
+            // Último jugador procesado, finalizar
+            setIsGroupSanityCheckActive(false);
+            setCurrentGroupSanityPlayerIndex(null);
+            setGroupSanityPlayerRolls({}); // Limpiar tiradas
+            // Mantener los inputs de pérdida SAN por si se repite chequeo similar
+            alert("Chequeo de Cordura Grupal Completado.");
+        }
+    };    
     // --- Textarea Handlers ---
     const handleSkillsTextChange = useCallback((playerKey: string, value: string) => {
          if (players[playerKey]?.statuses.muerto) return;
@@ -778,7 +881,7 @@ const CthulhuTracker = () => {
                                             autoFocus // Enfocar automáticamente este input
                                         />
                                         <Button
-                                            onClick={() => { /* TODO: Aplicar pérdida y pasar al siguiente */ }}
+                                            onClick={handleConfirmGroupSanityLoss}
                                             className="bg-purple-600 hover:bg-purple-500 h-8 px-3 text-sm"
                                         >
                                             Confirmar y Siguiente
