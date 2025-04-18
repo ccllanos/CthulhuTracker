@@ -1105,8 +1105,32 @@ const CthulhuTracker = () => {
                                             </div>
                                        </div>
                                        {/* --- Lista de Habilidades (Placeholder) --- */}
-                                       <div className='text-center text-gray-500 italic text-sm p-2'>
-                                            [Aquí se mostrará la lista ordenada de habilidades...]
+                                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 px-1 max-h-60 overflow-y-auto custom-scrollbar"> {/* Contenedor scrollable */}
+                                            {currentPlayer && Object.entries(currentPlayer.skills ?? {}) // Obtener [nombre, valor]
+                                                .sort(([nameA, valueA], [nameB, valueB]) => { // Ordenar
+                                                    switch (skillsSortOrder) {
+                                                        case 'name-asc': return nameA.localeCompare(nameB);
+                                                        case 'name-desc': return nameB.localeCompare(nameA);
+                                                        case 'value-asc': return valueA - valueB;
+                                                        case 'value-desc': return valueB - valueA; // Orden descendente por valor
+                                                        default: return 0;
+                                                    }
+                                                })
+                                                .map(([skillName, skillValue]) => ( // Mapear para renderizar
+                                                    <div key={skillName} className="flex justify-between items-center py-0.5 border-b border-gray-700/50 group cursor-pointer hover:bg-gray-700/40 px-1 rounded-sm transition-colors duration-100"
+                                                         onClick={() => alert(`Chequeo para ${skillName} (${skillValue}) - PENDIENTE`)} // Placeholder onClick
+                                                         title={`Clic para chequeo de ${skillName} (${skillValue})`}>
+                                                        <span className="text-sm text-gray-200 group-hover:text-red-300 flex-1 truncate pr-2">
+                                                            {skillName}
+                                                        </span>
+                                                        <span className="text-sm font-semibold text-red-400">{skillValue}%</span>
+                                                    </div>
+                                                ))
+                                            }
+                                            {/* Mensaje si no hay habilidades */}
+                                            {currentPlayer && Object.keys(currentPlayer.skills ?? {}).length === 0 && (
+                                                <p className='text-center text-gray-500 italic text-sm p-2 col-span-full'>No hay habilidades estructuradas definidas. Pega texto en formato "Nombre: Valor" en el área de arriba para crearlas.</p>
+                                            )}
                                         </div>
                                    </div>
                                    {/* --- Fin Sección Habilidades Estructuradas --- */}
