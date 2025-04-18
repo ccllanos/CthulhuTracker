@@ -851,6 +851,17 @@ const CthulhuTracker = () => {
              setSelectedPlayer(sequenceData[nextIndex].playerKey);
          }
     };
+
+    const handleContinueSequenceAfterEpisode = () => {
+        if (!currentEpisodeTriggered) return; // Guarda por si acaso
+
+        const playerKeyHandled = currentEpisodeTriggered.playerKey; // Guardar key antes de limpiar
+        console.log(`Continuando secuencia después del episodio de ${playerKeyHandled}.`);
+        setCurrentEpisodeTriggered(null); // Limpiar estado del episodio
+
+        // Ahora, ejecutar la lógica de avance/finalización para el jugador que tuvo el episodio
+        advanceOrEndSequence(playerKeyHandled);
+    };
         // TODO: Limpiar currentSanityLossInput
         // Aquí irá la lógica de validación, actualización y avance
     };
@@ -1311,7 +1322,14 @@ const CthulhuTracker = () => {
         </TooltipProvider>
     );
 } 
-        
+            // Llamar a la lógica de avance/finalización solo si NO hubo episodio
+            if (!episodeText) {
+                advanceOrEndSequence(playerKey); // Pasar la clave del jugador actual
+            } else {
+                 // Se disparó un episodio, establecer el estado para pausar la secuencia
+                 console.log(`Episodio de locura disparado para ${currentStep.personaje}. Pausando secuencia.`);
+                 setCurrentEpisodeTriggered({ playerKey: currentStep.playerKey, boutText: episodeText });
+            }    
 
     } finally {
         setIsConfirmingLoss(false); // Asegurar que el estado de carga se desactive
