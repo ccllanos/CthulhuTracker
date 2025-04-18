@@ -515,44 +515,12 @@ const CthulhuTracker = () => {
      };
      const handleTempInsanityIntCheckResult = (playerKey: string, passedIntCheck: boolean) => {
          const player = players[playerKey]; if (!player || player.statuses.muerto) return;
-
-         // Actualizar estado basado en el resultado
-         if (passedIntCheck) {
-             confirmStatusUpdate(playerKey, 'locuraTemporal', 'needsTempInsanityIntCheck', true);
-             // Si la locura se activó Y estábamos en pausa grupal, intentar reanudar automáticamente
-             if (isGroupSanityPaused && groupSanityPausedPlayerKey === playerKey) {
-                 // Usar setTimeout para asegurar que el estado se actualice antes de reanudar
-                 setTimeout(() => {
-                    // Verificar si la pausa sigue activa (debería estarlo justo antes de reanudar)
-                    if (isGroupSanityPaused && groupSanityPausedPlayerKey === playerKey) {
-                        console.log(`Intento de reanudación automática para ${playerKey} tras superar INT.`);
-                        handleResumeGroupSanityCheck(); // Llamar a la función de reanudar
-                    }
-                 }, 50); // Pequeño delay para permitir actualización de estado
-             }
-         } else {
-             // Falló INT (reprimida) - Solo limpiar el pending check
-             setPlayers(prev => ({...prev, [playerKey]: {...prev[playerKey], pendingChecks: {...prev[playerKey].pendingChecks, needsTempInsanityIntCheck: false}}}));
-             alert(`${player.personaje} falló INT. Reprime el horror.`);
-             // NO reanudar automáticamente aquí, requiere clic manual en "Reanudar Chequeo"
-         }
+         if (passedIntCheck) { confirmStatusUpdate(playerKey, 'locuraTemporal', 'needsTempInsanityIntCheck', true); /* Alert handled by confirmStatusUpdate */ }
+         else { setPlayers(prev => ({...prev, [playerKey]: {...prev[playerKey], pendingChecks: {...prev[playerKey].pendingChecks, needsTempInsanityIntCheck: false}}})); alert(`${player.personaje} falló INT. Reprime el horror.`); }
      };
      const confirmIndefiniteInsanity = (playerKey: string) => {
           const player = players[playerKey]; if (!player || player.statuses.muerto) return;
-          // Aplicar el estado de locura indefinida
-          confirmStatusUpdate(playerKey, 'locuraIndefinida', 'needsIndefiniteInsanityConfirmation', true);
-
-          // Si esto ocurrió mientras estábamos en pausa grupal, intentar reanudar automáticamente
-          if (isGroupSanityPaused && groupSanityPausedPlayerKey === playerKey) {
-                // Usar setTimeout para asegurar que el estado se actualice antes de reanudar
-                setTimeout(() => {
-                    // Verificar si la pausa sigue activa (debería estarlo justo antes de reanudar)
-                    if (isGroupSanityPaused && groupSanityPausedPlayerKey === playerKey) {
-                        console.log(`Intento de reanudación automática para ${playerKey} tras confirmar Locura Indef.`);
-                        handleResumeGroupSanityCheck(); // Llamar a la función de reanudar
-                    }
-                }, 50); // Pequeño delay
-          }
+          confirmStatusUpdate(playerKey, 'locuraIndefinida', 'needsIndefiniteInsanityConfirmation', true); /* Alert handled by confirmStatusUpdate */
      };
      const handleDyingConCheckResult = (playerKey: string, passed: boolean) => {
          const player = players[playerKey]; if (!player || !player.statuses.moribundo || player.statuses.muerto) return;
