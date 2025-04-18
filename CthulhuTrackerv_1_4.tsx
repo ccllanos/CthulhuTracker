@@ -730,7 +730,7 @@ const CthulhuTracker = () => {
             setIsSanityUpdateSequenceActive(false); // Detener secuencia por seguridad
             return;
         }
-
+        setIsConfirmingLoss(true); // Iniciar estado de carga
         const currentStep = sequenceData[currentSequenceIndex];
         const lossAmount = parseInt(currentSanityLossInput, 10);
 
