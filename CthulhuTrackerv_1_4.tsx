@@ -764,73 +764,70 @@ const CthulhuTracker = () => {
         let detectedPauseReason: typeof currentSequencePauseReason = null; // Variable para guardar razón de pausa
                     // Actualizar estado players (solo la resta directa por ahora)
                             // Actualizar estado players y realizar chequeos
-        setPlayers(prevPlayers => {
-            const updatedPlayerData = JSON.parse(JSON.stringify(prevPlayers[playerKey]));
-            updatedPlayerData.stats.cordura = newSanity;
-
-            // --- Inicio Lógica de Chequeos ---
-            let newPendingChecks = { ...updatedPlayerData.pendingChecks };
-            let newStatuses = { ...updatedPlayerData.statuses };
-            let sessionLoss = updatedPlayerData.sanityLostThisSession || 0;
-            let alertMessages: string[] = [];
-            let episodeTriggeredLocally = false; // Flag local para este jugador
-
-            if (isSessionActive && lossAmount > 0 && !newStatuses.muerto) {
-                sessionLoss += lossAmount;
-                updatedPlayerData.sanityLostThisSession = sessionLoss;
-
-                // PRIORIDAD 1: Pérdida durante Locura existente -> Nuevo Episodio
-                let existingInsanityType: 'locuraTemporal' | 'locuraIndefinida' | 'locuraSubyacente' | null = null;
-                if (newStatuses.locuraIndefinida) existingInsanityType = 'locuraIndefinida';
-                else if (newStatuses.locuraTemporal) existingInsanityType = 'locuraTemporal';
-                else if (newStatuses.locuraSubyacente) existingInsanityType = 'locuraSubyacente';
-
-                if (existingInsanityType) {
-                    const triggeredText = triggerBoutOfMadness(playerKey, existingInsanityType);
-                    if (triggeredText) {
-                         episodeText = triggeredText; // Guardar texto en variable externa al callback
-                         episodeTriggeredLocally = true;
-                         alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): ¡NUEVO EPISODIO DE LOCURA! (Perdió ${lossAmount} SAN mientras ${existingInsanityType}).`);
-                         // Limpiar checks pendientes de locura, ya que el episodio es inmediato
-                         newPendingChecks.needsTempInsanityIntCheck = false;
-                         newPendingChecks.needsIndefiniteInsanityConfirmation = false;
-                         newPendingChecks.needsSubyacenteConfirmation = false;
-                    }
-                }
-
-                // Si NO se disparó un episodio, comprobar Indefinida y Temporal
-                if (!episodeTriggeredLocally) {
-                    // PRIORIDAD 2: Chequeo Locura Indefinida
-                    const indefiniteThreshold = Math.floor(currentSanityActual / 5);
-                    if (sessionLoss >= indefiniteThreshold && !newStatuses.locuraIndefinida) {
-                        if (newStatuses.locuraTemporal) { newStatuses.locuraTemporal = false; newPendingChecks.needsTempInsanityIntCheck = false; }
-                        if (newStatuses.locuraSubyacente) { newStatuses.locuraSubyacente = false; }
-                        newPendingChecks.needsIndefiniteInsanityConfirmation = true;
-                        alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): ¡LOCURA INDEFINIDA DESENCADENADA! (Pérdida sesión: ${sessionLoss} >= ${indefiniteThreshold}...). Confirmar.`);
-                        newPendingChecks.needsTempInsanityIntCheck = false; // Prioridad sobre temporal
-                    }
-                    // PRIORIDAD 3: Chequeo Locura Temporal (solo si no hubo episodio NI indefinida confirmada/pendiente)
-                    else if (lossAmount >= 5 && !newStatuses.locuraIndefinida && !newStatuses.locuraTemporal && !newStatuses.locuraSubyacente && !newPendingChecks.needsIndefiniteInsanityConfirmation) {
-                         newPendingChecks.needsTempInsanityIntCheck = true;
-                         alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): Posible LOCURA TEMPORAL (Perdió ${lossAmount} SAN >= 5). Realiza tirada INT.`);
-                    }
-                }
-            }
-
-            updatedPlayerData.pendingChecks = newPendingChecks;
-            updatedPlayerData.statuses = newStatuses;
-
-            if (alertMessages.length > 0) {
-                 console.warn("Alertas/Chequeos pendientes para", updatedPlayerData.personaje, ":\n" + alertMessages.join("\n---\n"));
-                 // Considerar mostrar estas alertas de forma menos intrusiva más adelante
-            }
-            // --- Fin Lógica de Chequeos ---
-
-            return {
-                ...prevPlayers,
-                [playerKey]: updatedPlayerData
-            };
-        }); // Fin de setPlayers
+                // Actualizar estado players y detectar pausas/chequeos
+                setPlayers(prevPlayers => {
+                    const updatedPlayerData = JSON.parse(JSON.stringify(prevPlayers[playerKey]));
+                    updatedPlayerData.stats.cordura = newSanity;
+        
+                    let newPendingChecks = { ...updatedPlayerData.pendingChecks };
+                    let newStatuses = { ...updatedPlayerData.statuses };
+                    let sessionLoss = updatedPlayerData.sanityLostThisSession || 0;
+                    let pauseReasonDetectedLocally: typeof currentSequencePauseReason = null; // Para uso dentro del callback
+        
+                    if (isSessionActive && lossAmount > 0 && !newStatuses.muerto) {
+                        sessionLoss += lossAmount;
+                        updatedPlayerData.sanityLostThisSession = sessionLoss;
+        
+                        // --- Chequeos con Pausa (Priorizados) ---
+                        let existingInsanityType: 'locuraTemporal' | 'locuraIndefinida' | 'locuraSubyacente' | null = null;
+                        if (newStatuses.locuraIndefinida) existingInsanityType = 'locuraIndefinida';
+                        else if (newStatuses.locuraTemporal) existingInsanityType = 'locuraTemporal';
+                        else if (newStatuses.locuraSubyacente) existingInsanityType = 'locuraSubyacente';
+        
+                        // 1. Episodio por pérdida durante locura existente
+                        if (existingInsanityType) {
+                            const triggeredText = triggerBoutOfMadness(playerKey, existingInsanityType);
+                            if (triggeredText) {
+                                pauseReasonDetectedLocally = { type: 'episode', data: { boutText: triggeredText }, playerKey };
+                                // Limpiar checks pendientes si el episodio es directo
+                                newPendingChecks.needsTempInsanityIntCheck = false;
+                                newPendingChecks.needsIndefiniteInsanityConfirmation = false;
+                                newPendingChecks.needsSubyacenteConfirmation = false;
+                            }
+                        }
+        
+                        // 2. Locura Indefinida (si no hubo episodio)
+                        if (!pauseReasonDetectedLocally) {
+                            const indefiniteThreshold = Math.floor(currentSanityActual / 5);
+                            if (sessionLoss >= indefiniteThreshold && !newStatuses.locuraIndefinida) {
+                                if (newStatuses.locuraTemporal) { newStatuses.locuraTemporal = false; newPendingChecks.needsTempInsanityIntCheck = false; }
+                                if (newStatuses.locuraSubyacente) { newStatuses.locuraSubyacente = false; }
+                                pauseReasonDetectedLocally = { type: 'indef_confirm', data: { threshold: indefiniteThreshold, sessionLoss: sessionLoss, sanityBefore: currentSanityActual }, playerKey };
+                                newPendingChecks.needsIndefiniteInsanityConfirmation = true; // Mantener por si acaso
+                                 newPendingChecks.needsTempInsanityIntCheck = false; // Indefinida anula check temporal
+                            }
+                        }
+        
+                        // 3. Locura Temporal (si no hubo episodio NI indefinida)
+                        if (!pauseReasonDetectedLocally) {
+                             if (lossAmount >= 5 && !newStatuses.locuraIndefinida && !newStatuses.locuraTemporal && !newStatuses.locuraSubyacente) {
+                                 pauseReasonDetectedLocally = { type: 'temp_int_check', data: { intelligence: updatedPlayerData.stats.inteligencia, lossAmount: lossAmount }, playerKey };
+                                 newPendingChecks.needsTempInsanityIntCheck = true; // Mantener por si acaso
+                             }
+                        }
+                    } // Fin if (isSessionActive...)
+        
+                    updatedPlayerData.pendingChecks = newPendingChecks;
+                    updatedPlayerData.statuses = newStatuses; // Actualizar statuses modificados (ej: si indefinida limpió temporal)
+        
+                     // Pasar la razón detectada a la variable externa
+                     detectedPauseReason = pauseReasonDetectedLocally;
+        
+                    return {
+                        ...prevPlayers,
+                        [playerKey]: updatedPlayerData
+                    };
+                }); // Fin de setPlayers
 
             const advanceOrEndSequence = (currentPlayerKey: string) => {
         // Lógica movida desde handleConfirmSanityLoss
@@ -1322,14 +1319,17 @@ const CthulhuTracker = () => {
         </TooltipProvider>
     );
 } 
-            // Llamar a la lógica de avance/finalización solo si NO hubo episodio
-            if (!episodeText) {
-                advanceOrEndSequence(playerKey); // Pasar la clave del jugador actual
-            } else {
-                 // Se disparó un episodio, establecer el estado para pausar la secuencia
-                 console.log(`Episodio de locura disparado para ${currentStep.personaje}. Pausando secuencia.`);
-                 setCurrentEpisodeTriggered({ playerKey: currentStep.playerKey, boutText: episodeText });
-            }    
+                    // --- Lógica de Avance/Pausa ---
+        if (detectedPauseReason) {
+            // Pausar la secuencia
+            console.log(`Pausando secuencia para ${detectedPauseReason.playerKey}. Razón: ${detectedPauseReason.type}`);
+            setCurrentSequencePauseReason(detectedPauseReason);
+            // No avanzar, el modal cambiará para mostrar la razón de la pausa
+        } else {
+            // No hubo pausa, avanzar normalmente
+            advanceOrEndSequence(playerKey);
+        }
+        // --- Fin Lógica de Avance/Pausa ---    
 
     } finally {
         setIsConfirmingLoss(false); // Asegurar que el estado de carga se desactive
