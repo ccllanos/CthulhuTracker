@@ -699,8 +699,23 @@ const CthulhuTracker = () => {
 
     console.log("Secuencia de actualización preparada:", updateSequence);
 
-        // TODO: Implementar lógica de comparación y secuencia de actualización
+    if (updateSequence.length > 0) {
+        setSequenceData(updateSequence);
+        setCurrentSequenceIndex(0);
+        setCurrentSanityLossInput(""); // Limpiar input para el primer jugador
+        setIsSanityUpdateSequenceActive(true); // ¡Activar la secuencia!
+        // Podríamos seleccionar al primer jugador aquí, pero lo haremos al mostrar el UI de secuencia
+        // setSelectedPlayer(updateSequence[0].playerKey);
+        console.log(`Iniciando secuencia de actualización para ${updateSequence.length} jugadores.`);
+    } else {
+        console.log("No hay jugadores válidos para iniciar la secuencia de actualización.");
+    }
 
+        // TODO: Implementar lógica de comparación y secuencia de actualización
+                // Resetear campos del modal inicial independientemente de si la secuencia inicia
+                setSanityCheckSuccessLoss("");
+                setSanityCheckFailureLoss("");
+                setSanityCheckRolls({});
         setIsSanityCheckModalOpen(false); // Cerrar el modal
         // Opcional: Resetear inputs aquí o al reabrir? Por ahora, no reseteamos.
         // setSanityCheckSuccessLoss("");
