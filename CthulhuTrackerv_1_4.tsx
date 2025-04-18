@@ -785,7 +785,7 @@ const CthulhuTracker = () => {
                         console.log(`Avanzando al siguiente jugador: ${sequenceData[nextIndex].personaje} (Índice ${nextIndex})`);
                         setCurrentSequenceIndex(nextIndex);
                         // Opcional: seleccionar automáticamente al siguiente jugador en la UI principal
-                        // setSelectedPlayer(sequenceData[nextIndex].playerKey);
+                        setSelectedPlayer(sequenceData[nextIndex].playerKey);
                     }
         // TODO: Avanzar secuencia (índice o finalizar)
         // TODO: Limpiar currentSanityLossInput
