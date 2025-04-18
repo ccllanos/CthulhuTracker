@@ -730,6 +730,7 @@ const CthulhuTracker = () => {
             setIsSanityUpdateSequenceActive(false); // Detener secuencia por seguridad
             return;
         }
+        try {
         setIsConfirmingLoss(true); // Iniciar estado de carga
         const currentStep = sequenceData[currentSequenceIndex];
         const lossAmount = parseInt(currentSanityLossInput, 10);
@@ -1211,6 +1212,9 @@ const CthulhuTracker = () => {
             </div>
         </TooltipProvider>
     );
+} finally {
+    setIsConfirmingLoss(false); // Asegurar que el estado de carga se desactive
+}
 };
 
 export default CthulhuTracker;
