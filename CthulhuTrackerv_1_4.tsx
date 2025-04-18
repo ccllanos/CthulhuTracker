@@ -910,7 +910,33 @@ const CthulhuTracker = () => {
                             </div>
                             <p className="text-xs text-gray-500 text-center pt-1">Describe la tirada (Ej: "1d4", "0", "1d6+1").</p>
                             <hr className="border-gray-600" /> {/* Separador visual */}
-                            <p className='text-center text-gray-400 italic'>[Aquí irán las tiradas de los jugadores...]</p>
+                                                        <div className="max-h-60 overflow-y-auto space-y-2 pr-2"> {/* Contenedor scrollable */}
+                                {Object.entries(players)
+                                    .filter(([, playerData]) => !playerData.statuses.muerto) // Filtrar jugadores vivos
+                                    .map(([playerKey, playerData]) => (
+                                        <div key={playerKey} className="flex items-center justify-between gap-3 py-1 px-2 rounded bg-gray-700/50">
+                                            <Label htmlFor={`roll-${playerKey}`} className="text-sm font-medium text-gray-200 flex-1 truncate cursor-pointer" title={`${playerData.personaje} (Cordura actual: ${playerData.stats.cordura})`}>
+                                                {playerData.personaje} <span className='text-gray-400 text-xs'>(SAN: {playerData.stats.cordura})</span>
+                                            </Label>
+                                            <Input
+                                                id={`roll-${playerKey}`}
+                                                type="text" // Usar text para flexibilidad, validar luego
+                                                inputMode="numeric" // Sugerencia para teclado móvil
+                                                pattern="[0-9]*" // Patrón HTML básico
+                                                value={groupSanityPlayerRolls[playerKey] ?? ""}
+                                                onChange={(e) => {
+                                                    const rollValue = e.target.value.replace(/[^0-9]/g, ''); // Permitir solo números
+                                                    setGroupSanityPlayerRolls(prev => ({ ...prev, [playerKey]: rollValue }));
+                                                }}
+                                                className="bg-gray-800 border-gray-600 h-8 w-20 text-center focus:border-purple-500 focus:ring-purple-500"
+                                                placeholder="D100"
+                                            />
+                                        </div>
+                                ))}
+                                {Object.keys(players).filter(k => !players[k].statuses.muerto).length === 0 && (
+                                    <p className='text-center text-gray-500 italic py-4'>No hay investigadores activos para el chequeo.</p>
+                                )}
+                             </div>
                          </div>
                          {/* --- Fin Contenido del Modal --- */}
 
