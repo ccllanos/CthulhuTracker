@@ -1219,6 +1219,26 @@ const CthulhuTracker = () => {
                          </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+                                 {/* Modal para Procesamiento de Chequeo de Cordura Grupal */}
+                 <AlertDialog open={isGroupSanityCheckActive}> {/* Controlado por isGroupSanityCheckActive */}
+                     {/* No usamos onOpenChange aquí porque se controla programáticamente */}
+                    <AlertDialogContent className="bg-gray-800 text-gray-100 border-purple-700 max-w-md">
+                         <AlertDialogHeader>
+                             <AlertDialogTitle className="text-purple-400 text-xl flex items-center justify-center gap-2">
+                                 <BrainCircuit size={20}/> Procesando Chequeo de Cordura...
+                             </AlertDialogTitle>
+                             {/* Podríamos añadir descripción si fuera necesario */}
+                         </AlertDialogHeader>
+
+                         {/* --- Contenido del procesamiento (se moverá aquí) --- */}
+                         <div className="py-4">
+                            {/* El contenido actual irá aquí */}
+                         </div>
+                         {/* --- Fin Contenido --- */}
+
+                         {/* No necesitamos Footer por ahora, los botones están en el contenido */}
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </TooltipProvider>
     );
