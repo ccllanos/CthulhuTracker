@@ -1281,6 +1281,9 @@ const CthulhuTracker = () => {
                                                                          </AlertDialogAction>
                                                                      )}
                                                                  </AlertDialogFooter>
+                                                                                                 </>
+                                                                                                );
+                                                                                            })()}
                         </AlertDialogContent>
                     )}
                     {/* Podríamos poner un fallback aquí si sequenceData está vacío, pero no debería ocurrir si la lógica de inicio es correcta */}
