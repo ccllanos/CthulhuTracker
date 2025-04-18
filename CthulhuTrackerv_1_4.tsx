@@ -162,6 +162,7 @@ const CthulhuTracker = () => {
     const [groupSanityLossFailureInput, setGroupSanityLossFailureInput] = useState<string>(""); // Input para ej: "1d4"
     const [groupSanityPlayerRolls, setGroupSanityPlayerRolls] = useState<Record<string, string>>({}); // {playerId: "75"}
     const [isGroupSanityModalOpen, setIsGroupSanityModalOpen] = useState<boolean>(false); // Control del modal inicial
+        const [currentGroupSanityPlayerIndex, setCurrentGroupSanityPlayerIndex] = useState<number | null>(null); // Índice del jugador activo siendo procesado
     // --- Effects ---
     useEffect(() => {
         // --- Initial Load Logic ---
