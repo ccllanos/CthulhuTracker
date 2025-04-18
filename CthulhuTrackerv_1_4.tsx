@@ -156,6 +156,12 @@ const CthulhuTracker = () => {
     const [playerPendingSubyacente, setPlayerPendingSubyacente] = useState<string | null>(null);
     const isProcessingBlur = useRef<Record<string, boolean>>({});
     const initialLoadComplete = useRef<boolean>(false); // Ref to track initial load
+    // --- Estado para Chequeo de Cordura Grupal ---
+    const [isGroupSanityCheckActive, setIsGroupSanityCheckActive] = useState<boolean>(false);
+    const [groupSanityLossSuccessInput, setGroupSanityLossSuccessInput] = useState<string>(""); // Input para ej: "1d2"
+    const [groupSanityLossFailureInput, setGroupSanityLossFailureInput] = useState<string>(""); // Input para ej: "1d4"
+    const [groupSanityPlayerRolls, setGroupSanityPlayerRolls] = useState<Record<string, string>>({}); // {playerId: "75"}
+    const [isGroupSanityModalOpen, setIsGroupSanityModalOpen] = useState<boolean>(false); // Control del modal inicial
     // --- Effects ---
     useEffect(() => {
         // --- Initial Load Logic ---
