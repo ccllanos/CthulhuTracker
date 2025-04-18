@@ -670,7 +670,11 @@ const CthulhuTracker = () => {
     };
 
     const handleConfirmGroupSanityLoss = () => {
-        if (currentGroupSanityPlayerIndex === null) return; // Seguridad
+        console.log("[DEBUG] handleConfirmGroupSanityLoss triggered. Index:", currentGroupSanityPlayerIndex); // LOG 1
+        if (currentGroupSanityPlayerIndex === null) {
+             console.error("[DEBUG] Abort: currentGroupSanityPlayerIndex is null"); // LOG 2
+             return; // Seguridad
+        }
 
         // 1. Validar input
         const lossAmountStr = currentGroupSanityLossInput.trim();
@@ -683,7 +687,7 @@ const CthulhuTracker = () => {
              alert("Error: La pérdida de SAN no puede ser negativa.");
              return;
         }
-
+        console.log("[DEBUG] Input validated. Loss amount:", lossAmount); // LOG 3
         // 2. Obtener jugador actual
         const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
         const playerKey = activePlayerKeys[currentGroupSanityPlayerIndex];
@@ -699,6 +703,7 @@ const CthulhuTracker = () => {
 
         // 3. Aplicar pérdida y verificar estados (lógica adaptada de handleStatInputBlur)
         if (delta > 0 && !player.statuses.muerto) {
+            console.log(`[DEBUG] Applying loss ${delta} to player ${playerKey} (${player.personaje}). Current SAN: ${currentSanity}`); // LOG 4 
             setPlayers(prevPlayers => {
                 const stateBeforeUpdate = prevPlayers[playerKey];
                 if (!stateBeforeUpdate || stateBeforeUpdate.statuses.muerto) return prevPlayers; // Doble chequeo
@@ -758,11 +763,14 @@ const CthulhuTracker = () => {
 
         // 4. Limpiar input actual y avanzar
         setCurrentGroupSanityLossInput(""); // Resetear input para el siguiente
+        console.log("[DEBUG] State update potentially triggered. About to calculate next index. Current Index:", currentGroupSanityPlayerIndex); // LOG 5
         const nextIndex = currentGroupSanityPlayerIndex + 1;
 
         if (nextIndex < activePlayerKeys.length) {
+            console.log(`[DEBUG] Advancing to next player. Next Index: ${nextIndex}`); // LOG 6a
             setCurrentGroupSanityPlayerIndex(nextIndex); // Pasar al siguiente jugador
         } else {
+            console.log("[DEBUG] Last player processed. Finishing group check."); // LOG 6b
             // Último jugador procesado, finalizar
             setIsGroupSanityCheckActive(false);
             setCurrentGroupSanityPlayerIndex(null);
