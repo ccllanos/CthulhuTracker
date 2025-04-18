@@ -740,6 +740,18 @@ const CthulhuTracker = () => {
                       <Button onClick={handleToggleSession} variant="outline" className={cn("border-2 px-4 py-2 rounded-md flex items-center gap-2 transition-colors duration-200", isSessionActive ? "bg-red-900/80 border-red-600 hover:bg-red-800 text-red-100" : "bg-green-900/80 border-green-600 hover:bg-green-800 text-green-100")}>
                          {isSessionActive ? <Square size={16} /> : <Play size={16} />} {isSessionActive ? 'Terminar Sesión' : 'Iniciar Sesión'}
                       </Button>
+                      <Button
+                         onClick={() => console.log('TODO: Iniciar Chequeo Cordura Grupal')} // Placeholder action
+                         variant="outline"
+                         className={cn(
+                             "border-2 px-4 py-2 rounded-md flex items-center gap-2 transition-colors duration-200 border-blue-600 hover:bg-blue-900/50 text-blue-100",
+                             (!isSessionActive || Object.keys(players).length === 0) && "opacity-50 cursor-not-allowed"
+                         )}
+                         disabled={!isSessionActive || Object.keys(players).length === 0}
+                         title="Iniciar un chequeo de cordura para todos los investigadores activos"
+                     >
+                         <BrainCircuit size={16} /> Chequeo Cordura Grupal
+                     </Button>
                  </div>
 
                  {/* Player Selection and Add Button */}
