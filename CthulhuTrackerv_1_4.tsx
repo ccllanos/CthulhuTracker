@@ -761,7 +761,7 @@ const CthulhuTracker = () => {
         const newSanity = Math.max(0, currentSanityActual - lossAmount); // Calcular nueva cordura (mínimo 0)
 
         console.log(`   Cordura: ${currentSanityActual} -> ${newSanity} (Perdió ${lossAmount})`);
-        let episodeText: string | undefined = undefined; // Variable para guardar texto del episodio
+        let detectedPauseReason: typeof currentSequencePauseReason = null; // Variable para guardar razón de pausa
                     // Actualizar estado players (solo la resta directa por ahora)
                             // Actualizar estado players y realizar chequeos
         setPlayers(prevPlayers => {
