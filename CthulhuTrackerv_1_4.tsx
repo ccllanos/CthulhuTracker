@@ -164,6 +164,8 @@ const CthulhuTracker = () => {
     const [isGroupSanityModalOpen, setIsGroupSanityModalOpen] = useState<boolean>(false); // Control del modal inicial
     const [currentGroupSanityPlayerIndex, setCurrentGroupSanityPlayerIndex] = useState<number | null>(null); // Índice del jugador activo siendo procesado
     const [currentGroupSanityLossInput, setCurrentGroupSanityLossInput] = useState<string>(""); // Input para la pérdida SAN específica del jugador actual
+    const [isGroupSanityPaused, setIsGroupSanityPaused] = useState<boolean>(false); // Indica si el chequeo grupal está pausado por una locura pendiente
+    const [groupSanityPausedPlayerKey, setGroupSanityPausedPlayerKey] = useState<string | null>(null); // Key del jugador que causó la pausa    
     // --- Effects ---
     useEffect(() => {
         // --- Initial Load Logic ---
