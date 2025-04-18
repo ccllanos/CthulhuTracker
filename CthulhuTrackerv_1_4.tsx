@@ -665,16 +665,14 @@ const CthulhuTracker = () => {
         // Si todo es válido: Iniciar el proceso
         setIsGroupSanityModalOpen(false); // Cerrar el modal
         setIsGroupSanityCheckActive(true); // Marcar que el proceso grupal ha comenzado
+        const firstPlayerKey = activePlayerKeys[0]; // Obtener la key del primer jugador
         setCurrentGroupSanityPlayerIndex(0); // Empezar con el primer jugador activo
+        setSelectedPlayer(firstPlayerKey); // *** NUEVO: Seleccionar al primer jugador en la vista principal ***
         // console.log("Iniciando procesamiento grupal con:", { success: groupSanityLossSuccessInput, failure: groupSanityLossFailureInput, rolls: groupSanityPlayerRolls }); // Log para depuración
     };
 
     const handleConfirmGroupSanityLoss = () => {
-        console.log("[DEBUG] handleConfirmGroupSanityLoss triggered. Index:", currentGroupSanityPlayerIndex); // LOG 1
-        if (currentGroupSanityPlayerIndex === null) {
-             console.error("[DEBUG] Abort: currentGroupSanityPlayerIndex is null"); // LOG 2
-             return; // Seguridad
-        }
+        if (currentGroupSanityPlayerIndex === null) return; // Seguridad
 
         // 1. Validar input
         const lossAmountStr = currentGroupSanityLossInput.trim();
@@ -687,7 +685,7 @@ const CthulhuTracker = () => {
              alert("Error: La pérdida de SAN no puede ser negativa.");
              return;
         }
-        console.log("[DEBUG] Input validated. Loss amount:", lossAmount); // LOG 3
+
         // 2. Obtener jugador actual
         const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
         const playerKey = activePlayerKeys[currentGroupSanityPlayerIndex];
@@ -703,7 +701,6 @@ const CthulhuTracker = () => {
 
         // 3. Aplicar pérdida y verificar estados (lógica adaptada de handleStatInputBlur)
         if (delta > 0 && !player.statuses.muerto) {
-            console.log(`[DEBUG] Applying loss ${delta} to player ${playerKey} (${player.personaje}). Current SAN: ${currentSanity}`); // LOG 4 
             setPlayers(prevPlayers => {
                 const stateBeforeUpdate = prevPlayers[playerKey];
                 if (!stateBeforeUpdate || stateBeforeUpdate.statuses.muerto) return prevPlayers; // Doble chequeo
@@ -763,14 +760,13 @@ const CthulhuTracker = () => {
 
         // 4. Limpiar input actual y avanzar
         setCurrentGroupSanityLossInput(""); // Resetear input para el siguiente
-        console.log("[DEBUG] State update potentially triggered. About to calculate next index. Current Index:", currentGroupSanityPlayerIndex); // LOG 5
         const nextIndex = currentGroupSanityPlayerIndex + 1;
 
         if (nextIndex < activePlayerKeys.length) {
-            console.log(`[DEBUG] Advancing to next player. Next Index: ${nextIndex}`); // LOG 6a
+            const nextPlayerKey = activePlayerKeys[nextIndex]; // Obtener la key del siguiente jugador
             setCurrentGroupSanityPlayerIndex(nextIndex); // Pasar al siguiente jugador
+            setSelectedPlayer(nextPlayerKey); // *** NUEVO: Seleccionar al siguiente jugador en la vista principal ***
         } else {
-            console.log("[DEBUG] Last player processed. Finishing group check."); // LOG 6b
             // Último jugador procesado, finalizar
             setIsGroupSanityCheckActive(false);
             setCurrentGroupSanityPlayerIndex(null);
