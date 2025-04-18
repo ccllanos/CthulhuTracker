@@ -792,7 +792,8 @@ const CthulhuTracker = () => {
             // Mantener los inputs de pérdida SAN por si se repite chequeo similar
             alert("Chequeo de Cordura Grupal Completado.");
         }
-    };    
+    };
+    
     // --- Textarea Handlers ---
     const handleSkillsTextChange = useCallback((playerKey: string, value: string) => {
          if (players[playerKey]?.statuses.muerto) return;
@@ -902,7 +903,7 @@ const CthulhuTracker = () => {
                                                 Resuelve el chequeo de locura pendiente para <span className="font-bold">{playerData.personaje}</span> en su ficha.
                                             </p>
                                             <Button
-                                                onClick={() => { /* TODO: Reanudar chequeo */ alert("Reanudando..."); }} // Placeholder
+                                                onClick={handleResumeGroupSanityCheck} // Llamar a la nueva función
                                                 className="bg-yellow-600 hover:bg-yellow-500 text-black h-8 px-3 text-sm mt-2"
                                                 size="sm"
                                             >
