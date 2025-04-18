@@ -752,7 +752,20 @@ const CthulhuTracker = () => {
         const newSanity = Math.max(0, currentSanityActual - lossAmount); // Calcular nueva cordura (mínimo 0)
 
         console.log(`   Cordura: ${currentSanityActual} -> ${newSanity} (Perdió ${lossAmount})`);
-        // TODO: Calcular nueva cordura y actualizar estado players
+                    // Actualizar estado players (solo la resta directa por ahora)
+                    setPlayers(prevPlayers => {
+                        // Crear una copia profunda solo de los datos del jugador afectado para evitar mutaciones no deseadas
+                        const updatedPlayerData = JSON.parse(JSON.stringify(prevPlayers[playerKey]));
+                        updatedPlayerData.stats.cordura = newSanity;
+        
+                        // TODO: Aquí iría la lógica compleja de checkeos (locura, etc.) basados en 'lossAmount' y 'newSanity'
+                        // Por ahora, solo aplicamos la resta.
+        
+                        return {
+                            ...prevPlayers,
+                            [playerKey]: updatedPlayerData
+                        };
+                    });
         // TODO: Avanzar secuencia (índice o finalizar)
         // TODO: Limpiar currentSanityLossInput
         // Aquí irá la lógica de validación, actualización y avance
