@@ -1409,7 +1409,7 @@ const CthulhuTracker = () => {
                                                 </div>
                                             )}
                                              {pauseInfo?.type === 'indef_confirm' && (
-                                                 <AlertDialogAction className="bg-purple-700 hover:bg-purple-600" onClick={() => console.log('TODO: Llamar handleResolveIndefConfirm')}>
+                                                 <AlertDialogAction className="bg-purple-700 hover:bg-purple-600" onClick={handleResolveIndefConfirm}>
                                                      Confirmar Locura Indefinida y Episodio
                                                  </AlertDialogAction>
                                             )}
