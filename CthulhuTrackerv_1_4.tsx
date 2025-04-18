@@ -68,6 +68,7 @@ interface PlayerData {
     personaje: string;
     stats: Record<string, number>;
     habilidades: Record<string, number>; // Kept for potential future use or data conversion
+    skills: Record<string, number>; // <-- NEW: Structured skills { "Disparo": 50, "Ocultar": 30 }
     skillsNotes?: string; // <-- NEW: Free-form skills text
     trasfondo: Record<string, string>;
     inventoryNotes?: string; // <-- NEW: Free-form inventory text
