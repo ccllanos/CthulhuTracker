@@ -676,13 +676,13 @@ const CthulhuTracker = () => {
     const handleConfirmGroupSanityLoss = () => {
         if (currentGroupSanityPlayerIndex === null) return;
 
-        // 1. Validar input (igual)
+        // 1. Validar input
         const lossAmountStr = currentGroupSanityLossInput.trim();
         if (lossAmountStr === '' || isNaN(parseInt(lossAmountStr, 10))) { alert("Error: Input numérico requerido."); return; }
         const lossAmount = parseInt(lossAmountStr, 10);
         if (lossAmount < 0) { alert("Error: Pérdida no puede ser negativa."); return; }
 
-        // 2. Obtener jugador actual (igual)
+        // 2. Obtener jugador actual
         const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
         const playerKey = activePlayerKeys[currentGroupSanityPlayerIndex];
         if (!playerKey || !players[playerKey]) { console.error("Error interno: Jugador no encontrado."); setIsGroupSanityCheckActive(false); setCurrentGroupSanityPlayerIndex(null); return; }
@@ -690,102 +690,97 @@ const CthulhuTracker = () => {
         const currentSanity = player.stats.cordura;
         const delta = lossAmount;
 
-        // 3. Aplicar pérdida (Llamada a setPlayers)
-        let stateUpdated = false; // Flag para saber si llamamos a setPlayers
+        // 3. Calcular cambios y determinar si se requiere pausa ANTES de setPlayers
+        let requiresPause = false;
+        let calculatedNextStats = { ...player.stats };
+        let calculatedNextStatuses = { ...player.statuses };
+        let calculatedNextPendingChecks = { ...player.pendingChecks };
+        let calculatedSanityLossSession = player.sanityLostThisSession;
+        const alerts: string[] = [];
+
         if (delta > 0 && !player.statuses.muerto) {
-            stateUpdated = true;
-            setPlayers(prevPlayers => {
-                const stateBeforeUpdate = prevPlayers[playerKey];
-                if (!stateBeforeUpdate || stateBeforeUpdate.statuses.muerto) return prevPlayers;
+            const actualNewValue = Math.max(0, currentSanity - delta);
+            calculatedNextStats.cordura = actualNewValue;
+            const sessionLossBeforeThisEvent = player.sanityLostThisSession;
+            calculatedSanityLossSession = sessionLossBeforeThisEvent + delta;
+            const sanityBeforeEvent = currentSanity;
+            const indefThreshold = Math.floor(sanityBeforeEvent / 5);
 
-                const actualNewValue = Math.max(0, currentSanity - delta);
-                let nextStats = { ...stateBeforeUpdate.stats, cordura: actualNewValue };
-                let nextPendingChecks = { ...stateBeforeUpdate.pendingChecks };
-                let nextStatuses = { ...stateBeforeUpdate.statuses };
-                let sessionLossBeforeThisEvent = stateBeforeUpdate.sanityLostThisSession;
-                let finalSessionLossToStore = sessionLossBeforeThisEvent;
-                const alerts: string[] = []; // Alertas específicas de la actualización
-                const updatedTotalSessionLoss = sessionLossBeforeThisEvent + delta;
-                const sanityBeforeEvent = currentSanity;
-                const indefThreshold = Math.floor(sanityBeforeEvent / 5);
+            // Usar copias locales de statuses/pendingChecks para la simulación
+            let tempNextStatuses = { ...calculatedNextStatuses };
+            let tempNextPendingChecks = { ...calculatedNextPendingChecks };
 
-                // Lógica de activación de chequeos pendientes (sin mostrar alertas aquí todavía)
-                let pendingCheckTriggered = false;
-                if (stateBeforeUpdate.statuses.locuraSubyacente && !nextStatuses.locuraTemporal && !nextStatuses.locuraIndefinida) {
-                    // Activa Bout of Madness directamente, no es un 'pending check' que pause aquí.
-                    // La alerta del Bout se maneja en otro lado.
-                } else if (updatedTotalSessionLoss >= indefThreshold && !nextStatuses.locuraIndefinida) {
-                     if (nextStatuses.locuraTemporal) nextStatuses.locuraTemporal = false; if (nextStatuses.locuraSubyacente) nextStatuses.locuraSubyacente = false;
-                    nextPendingChecks.needsIndefiniteInsanityConfirmation = true;
-                    pendingCheckTriggered = true; // Marcar que se activó un chequeo
-                    alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): ¡LOCURA INDEFINIDA DESENCADENADA! (...)`);
-                } else if (delta >= 5 && !nextStatuses.locuraTemporal && !nextStatuses.locuraIndefinida && !nextStatuses.locuraSubyacente) {
-                     if (nextStatuses.locuraSubyacente) nextStatuses.locuraSubyacente = false;
-                    nextPendingChecks.needsTempInsanityIntCheck = true;
-                    pendingCheckTriggered = true; // Marcar que se activó un chequeo
-                    alerts.push(`ALERTA (${stateBeforeUpdate.personaje}): Posible LOCURA TEMPORAL (...)`);
-                }
-                finalSessionLossToStore = updatedTotalSessionLoss;
+            // Lógica de activación de chequeos pendientes (simulada)
+            if (player.statuses.locuraSubyacente && !tempNextStatuses.locuraTemporal && !tempNextStatuses.locuraIndefinida) {
+                // Esto activaría un Bout, pero no una pausa de este tipo.
+                alerts.push(`ALERTA (${player.personaje}): ¡NUEVO EPISODIO DE LOCURA! (Perdió ${delta} SAN mientras estaba en Locura Subyacente).`);
+            } else if (calculatedSanityLossSession >= indefThreshold && !tempNextStatuses.locuraIndefinida) {
+                if (tempNextStatuses.locuraTemporal) tempNextStatuses.locuraTemporal = false;
+                if (tempNextStatuses.locuraSubyacente) tempNextStatuses.locuraSubyacente = false;
+                tempNextPendingChecks.needsIndefiniteInsanityConfirmation = true;
+                requiresPause = true; // PAUSA REQUERIDA
+                alerts.push(`ALERTA (${player.personaje}): ¡LOCURA INDEFINIDA DESENCADENADA! (...)`);
+            } else if (delta >= 5 && !tempNextStatuses.locuraTemporal && !tempNextStatuses.locuraIndefinida && !tempNextStatuses.locuraSubyacente) {
+                if (tempNextStatuses.locuraSubyacente) tempNextStatuses.locuraSubyacente = false;
+                tempNextPendingChecks.needsTempInsanityIntCheck = true;
+                requiresPause = true; // PAUSA REQUERIDA
+                alerts.push(`ALERTA (${player.personaje}): Posible LOCURA TEMPORAL (...)`);
+            }
 
-                // Mostrar alertas informativas generales (si las hubiera y no son de pausa inminente)
-                if (alerts.length > 0 && !pendingCheckTriggered) {
-                     setTimeout(() => alert(alerts.join('\n\n---\n')), 10);
-                }
-
-                return { ...prevPlayers, [playerKey]: { ...stateBeforeUpdate, stats: nextStats, sanityLostThisSession: finalSessionLossToStore, statuses: nextStatuses, pendingChecks: nextPendingChecks } };
-            });
-
-            // Actualizar input visual si es el jugador seleccionado
-             if (selectedPlayer === playerKey) {
-                setStatInputs(prev => ({...prev, cordura: String(Math.max(0, currentSanity - delta))}));
-             }
+            // Asignar los resultados de la simulación a las variables que se usarán en setPlayers
+            calculatedNextPendingChecks = tempNextPendingChecks;
+            calculatedNextStatuses = tempNextStatuses; // Asegurarse de que los cambios de estado (como quitar locura temporal) se apliquen
         }
 
-        // 4. Decidir Pausa o Avance DESPUÉS de la actualización de estado (dentro de setTimeout)
-        setTimeout(() => {
-            // Leer el estado MÁS RECIENTE del jugador DENTRO del timeout
-            const updatedPlayerState = players[playerKey];
-
-            // Si el jugador no existe (error inesperado), abortar
-            if (!updatedPlayerState) {
-                console.error(`Error fatal: Jugador ${playerKey} no encontrado después de la actualización.`);
-                setIsGroupSanityCheckActive(false); setCurrentGroupSanityPlayerIndex(null); setIsGroupSanityPaused(false); setGroupSanityPausedPlayerKey(null);
-                return;
-            }
-
-            // Verificar si la condición de pausa existe AHORA
-            const requiresPause = updatedPlayerState.pendingChecks.needsTempInsanityIntCheck ||
-                                  updatedPlayerState.pendingChecks.needsIndefiniteInsanityConfirmation;
-
-            if (requiresPause) {
-                // PAUSAR: Actualizar estados de pausa y mostrar alerta
-                setIsGroupSanityPaused(true);
-                setGroupSanityPausedPlayerKey(playerKey);
-                setCurrentGroupSanityLossInput(""); // Limpiar input
-                alert(`¡PAUSA! El chequeo grupal se detiene.\n\nInvestigador: ${updatedPlayerState.personaje}\nAcción Requerida: Resuelve el chequeo pendiente de Locura en su ficha.\n\nLuego pulsa "Reanudar Chequeo".`);
-                // NO avanzar al siguiente jugador
-            } else {
-                // AVANZAR: Limpiar input y pasar al siguiente o finalizar
-                setCurrentGroupSanityLossInput("");
-                const currentIdx = activePlayerKeys.findIndex(key => key === playerKey);
-                const nextIndex = currentIdx + 1;
-
-                if (nextIndex < activePlayerKeys.length) {
-                    const nextPlayerKey = activePlayerKeys[nextIndex];
-                    setCurrentGroupSanityPlayerIndex(nextIndex);
-                    setSelectedPlayer(nextPlayerKey);
-                } else {
-                    // Finalizar
-                    setIsGroupSanityCheckActive(false);
-                    setCurrentGroupSanityPlayerIndex(null);
-                    setGroupSanityPlayerRolls({});
-                    alert("Chequeo de Cordura Grupal Completado.");
+        // 4. Aplicar los cambios calculados al estado (si hubo delta)
+        if (delta > 0 && !player.statuses.muerto) {
+            setPlayers(prevPlayers => ({
+                ...prevPlayers,
+                [playerKey]: {
+                    ...prevPlayers[playerKey], // Empezar con el estado previo real
+                    stats: calculatedNextStats,
+                    sanityLostThisSession: calculatedSanityLossSession,
+                    statuses: calculatedNextStatuses, // Aplicar estados calculados
+                    pendingChecks: calculatedNextPendingChecks, // Aplicar chequeos calculados
                 }
+            }));
+            // Actualizar input visual si es el jugador seleccionado
+            if (selectedPlayer === playerKey) {
+                setStatInputs(prev => ({ ...prev, cordura: String(calculatedNextStats.cordura) }));
             }
-        }, 0); // setTimeout 0ms para poner esta lógica al final de la cola de eventos
+            // Mostrar alertas informativas (que no son de pausa inminente)
+            if (alerts.length > 0 && !requiresPause) {
+                setTimeout(() => alert(alerts.join('\n\n---\n')), 10);
+            }
+        }
 
+        // 5. Decidir PAUSA o AVANCE basado en el cálculo previo
+        if (requiresPause) {
+            // --- PAUSAR ---
+            setIsGroupSanityPaused(true);
+            setGroupSanityPausedPlayerKey(playerKey);
+            setCurrentGroupSanityLossInput(""); // Limpiar input
+            // Mostrar alerta de pausa INMEDIATAMENTE
+            alert(`¡PAUSA! El chequeo grupal se detiene.\n\nInvestigador: ${player.personaje}\nAcción Requerida: Resuelve el chequeo pendiente de Locura en su ficha.\n\nLuego pulsa "Reanudar Chequeo".`);
+        } else {
+            // --- AVANZAR ---
+            setCurrentGroupSanityLossInput(""); // Limpiar input
+            const currentIdx = activePlayerKeys.findIndex(key => key === playerKey);
+            const nextIndex = currentIdx + 1;
+
+            if (nextIndex < activePlayerKeys.length) {
+                const nextPlayerKey = activePlayerKeys[nextIndex];
+                setCurrentGroupSanityPlayerIndex(nextIndex);
+                setSelectedPlayer(nextPlayerKey);
+            } else {
+                // Finalizar
+                setIsGroupSanityCheckActive(false);
+                setCurrentGroupSanityPlayerIndex(null);
+                setGroupSanityPlayerRolls({});
+                alert("Chequeo de Cordura Grupal Completado.");
+            }
+        }
     };
-
     const handleResumeGroupSanityCheck = () => {
         if (!isGroupSanityPaused || !groupSanityPausedPlayerKey || currentGroupSanityPlayerIndex === null) {
              console.warn("Intento de reanudar sin estar pausado correctamente.");
