@@ -898,7 +898,19 @@ const CthulhuTracker = () => {
 
                          {/* --- Contenido del Modal (se rellenará en pasos siguientes) --- */}
                          <div className="py-4 space-y-3">
-                            <p className='text-center text-gray-400 italic'>[Aquí irán los inputs...]</p>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <Label htmlFor="groupSanSuccess" className="text-sm text-gray-400 block mb-1">Pérdida SAN (Éxito)</Label>
+                                    <Input id="groupSanSuccess" value={groupSanityLossSuccessInput} onChange={(e) => setGroupSanityLossSuccessInput(e.target.value)} className="bg-gray-700 border-gray-600 focus:border-purple-500 focus:ring-purple-500" placeholder="Ej: 0, 1, 1d3" />
+                                </div>
+                                <div>
+                                    <Label htmlFor="groupSanFailure" className="text-sm text-gray-400 block mb-1">Pérdida SAN (Fallo)</Label>
+                                    <Input id="groupSanFailure" value={groupSanityLossFailureInput} onChange={(e) => setGroupSanityLossFailureInput(e.target.value)} className="bg-gray-700 border-gray-600 focus:border-purple-500 focus:ring-purple-500" placeholder="Ej: 1d4, 1d6+1" />
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-500 text-center pt-1">Describe la tirada (Ej: "1d4", "0", "1d6+1").</p>
+                            <hr className="border-gray-600" /> {/* Separador visual */}
+                            <p className='text-center text-gray-400 italic'>[Aquí irán las tiradas de los jugadores...]</p>
                          </div>
                          {/* --- Fin Contenido del Modal --- */}
 
