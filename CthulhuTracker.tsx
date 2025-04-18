@@ -969,6 +969,26 @@ const CthulhuTracker = () => {
                          </AlertDialogFooter>
                      </AlertDialogContent>
                  </AlertDialog>
+                                  {/* Sanity Check Modal */}
+                                  <AlertDialog open={isSanityCheckModalOpen} onOpenChange={setIsSanityCheckModalOpen}>
+                    <AlertDialogContent className="bg-gray-800 text-gray-100 border-blue-600">
+                        <AlertDialogHeader>
+                            <AlertDialogTitle className="text-blue-400 text-2xl">Chequeo de Cordura Grupal</AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-300">
+                                Introduce la pérdida de SAN y los resultados de las tiradas.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        {/* Inputs irán aquí en los próximos pasos */}
+                        <div className="my-4 space-y-4">
+                            {/* Placeholder para los inputs */}
+                            <p className="text-sm text-gray-400">(Aquí irán los inputs de pérdida y resultados)</p>
+                        </div>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel className="border-gray-600 hover:bg-gray-700">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction className="bg-blue-700 hover:bg-blue-600" onClick={() => console.log('TODO: Procesar Inputs')}>Siguiente</AlertDialogAction> {/* Acción Placeholder */}
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                 </AlertDialog>
 
             </div>
         </TooltipProvider>
