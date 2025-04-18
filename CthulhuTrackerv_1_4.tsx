@@ -733,6 +733,19 @@ const CthulhuTracker = () => {
                      </Select>
                      <Button onClick={handleAddPlayer} className="w-full sm:w-auto bg-green-700 hover:bg-green-600 text-gray-100 px-6">Añadir Investigador</Button>
                  </div>
+                {/* --- Sección de Procesamiento Grupal de Cordura --- */}
+                 {isGroupSanityCheckActive && currentGroupSanityPlayerIndex !== null && (
+                     <div className="my-6 p-4 border-2 border-purple-600 bg-purple-900/20 rounded-lg shadow-lg animate-pulse">
+                         <h3 className="text-xl font-semibold text-purple-300 mb-3 text-center flex items-center justify-center gap-2">
+                             <BrainCircuit size={22} /> Procesando Chequeo de Cordura...
+                         </h3>
+                         {/* Contenido específico del jugador actual irá aquí */}
+                         <div className='text-center text-gray-400 italic'>
+                             [Información del jugador actual y acción requerida...]
+                         </div>
+                     </div>
+                 )}
+                 {/* --- Fin Sección de Procesamiento --- */}
                  {/* Player Detail Section */}
                  {currentPlayer && selectedPlayer && (
                      <div key={selectedPlayer} className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 transition-all duration-300 ease-in-out">
