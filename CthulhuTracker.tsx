@@ -663,15 +663,32 @@ const CthulhuTracker = () => {
 
     console.log("Jugadores activos para el chequeo:", activePlayers.map(([key]) => key)); // Opcional: Mostrar llaves
 
+    const updateSequence: { playerKey: string; personaje: string; roll: number; currentSanity: number; success: boolean; lossAmountString: string; }[] = [];
+
     activePlayers.forEach(([playerKey, playerData]) => {
         const rollString = sanityCheckRolls[playerKey] ?? ''; // Obtener string de tirada
         const roll = parseInt(rollString, 10); // Convertir a número
         const currentSanity = playerData.stats.cordura; // Obtener cordura actual
 
         if (!isNaN(roll) && roll >= 1 && roll <= 100) { // Validar tirada
-            console.log(`-> ${playerData.personaje}: Tiró ${roll}, Cordura Actual ${currentSanity}`);
+            const success = roll <= currentSanity;
+            const lossAmountString = success ? sanityCheckSuccessLoss : sanityCheckFailureLoss;
+            const resultText = success ? 'ÉXITO' : 'FALLO';
+
+            console.log(`-> ${playerData.personaje}: Tiró ${roll} vs ${currentSanity} SAN = ${resultText}. Pérdida: ${lossAmountString || 'N/A'}`);
+
+            // Añadir al array para la secuencia de actualización
+            updateSequence.push({
+                playerKey,
+                personaje: playerData.personaje,
+                roll,
+                currentSanity,
+                success,
+                lossAmountString: lossAmountString || '0', // Usar '0' si está vacío
+            });
+
         } else {
-             console.log(`-> ${playerData.personaje}: Tirada inválida o no ingresada ('${rollString}').`);
+             console.warn(`-> ${playerData.personaje}: Tirada inválida o no ingresada ('${rollString}'). Se omite.`); // Cambiado a warn
         }
     });
 
