@@ -1228,7 +1228,15 @@ const CthulhuTracker = () => {
                                     Resultado: <span className={cn("font-semibold", sequenceData[currentSequenceIndex].success ? "text-green-400" : "text-red-400")}>{sequenceData[currentSequenceIndex].success ? 'ÉXITO' : 'FALLO'}</span> (Tiró {sequenceData[currentSequenceIndex].roll} vs {sequenceData[currentSequenceIndex].currentSanity}).
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
-                            <div className="my-4 space-y-3">
+                            {/* Determinar si hay episodio para el jugador actual */}
+                        {(() => {
+                            const currentStepData = sequenceData[currentSequenceIndex];
+                            const episodeInfo = currentEpisodeTriggered && currentEpisodeTriggered.playerKey === currentStepData.playerKey ? currentEpisodeTriggered : null;
+
+                            return (
+                                <>
+                                    {/* Contenido Principal Condicional */}
+                                    <div className="my-4 space-y-3">
                                 <Label htmlFor="sanity-loss-input" className="text-sm font-medium text-gray-400 block mb-1">
                                     Introduce la pérdida de Cordura ({sequenceData[currentSequenceIndex].lossAmountString}):
                                 </Label>
