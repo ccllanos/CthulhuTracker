@@ -177,6 +177,11 @@ const CthulhuTracker = () => {
     const [sanityCheckSuccessLoss, setSanityCheckSuccessLoss] = useState<string>("");
     const [sanityCheckFailureLoss, setSanityCheckFailureLoss] = useState<string>("");
     const [sanityCheckRolls, setSanityCheckRolls] = useState<Record<string, string>>({});
+        // Estados para la secuencia de actualización de cordura grupal
+    const [isSanityUpdateSequenceActive, setIsSanityUpdateSequenceActive] = useState<boolean>(false);
+    const [sequenceData, setSequenceData] = useState<Array<{ playerKey: string; personaje: string; roll: number; currentSanity: number; success: boolean; lossAmountString: string; }>>([]);
+    const [currentSequenceIndex, setCurrentSequenceIndex] = useState<number>(0);
+    const [currentSanityLossInput, setCurrentSanityLossInput] = useState<string>("");
     const isProcessingBlur = useRef<Record<string, boolean>>({});
     const initialLoadComplete = useRef<boolean>(false); // Ref to track initial load
 
