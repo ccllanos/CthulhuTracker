@@ -1101,6 +1101,41 @@ const CthulhuTracker = () => {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                  </AlertDialog>
+                             {/* Sanity Update Sequence Modal */}
+                             <AlertDialog open={isSanityUpdateSequenceActive}> {/* Sin onOpenChange para forzar la secuencia */}
+                    {sequenceData.length > 0 && currentSequenceIndex < sequenceData.length && ( // Asegurar datos válidos
+                        <AlertDialogContent className="bg-gray-800 text-gray-100 border-yellow-600">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle className="text-yellow-400 text-xl">
+                                    Actualizar Cordura: {sequenceData[currentSequenceIndex].personaje} ({currentSequenceIndex + 1}/{sequenceData.length})
+                                </AlertDialogTitle>
+                                <AlertDialogDescription className="text-gray-300">
+                                    Resultado: <span className={cn("font-semibold", sequenceData[currentSequenceIndex].success ? "text-green-400" : "text-red-400")}>{sequenceData[currentSequenceIndex].success ? 'ÉXITO' : 'FALLO'}</span> (Tiró {sequenceData[currentSequenceIndex].roll} vs {sequenceData[currentSequenceIndex].currentSanity}).
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="my-4 space-y-3">
+                                <Label htmlFor="sanity-loss-input" className="text-sm font-medium text-gray-400 block mb-1">
+                                    Introduce la pérdida de Cordura ({sequenceData[currentSequenceIndex].lossAmountString}):
+                                </Label>
+                                <Input
+                                    id="sanity-loss-input"
+                                    type="number"
+                                    min="0"
+                                    value={currentSanityLossInput}
+                                    onChange={(e) => setCurrentSanityLossInput(e.target.value)}
+                                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-yellow-500 focus:ring-yellow-500 w-full text-center h-10 text-lg"
+                                    placeholder="Pérdida SAN"
+                                    autoFocus // Enfocar automáticamente este input
+                                />
+                            </div>
+                            <AlertDialogFooter>
+                                {/* No hay Cancelar para forzar la secuencia */}
+                                <AlertDialogAction className="bg-yellow-700 hover:bg-yellow-600" onClick={() => console.log('TODO: Aplicar pérdida y pasar al siguiente')}>Confirmar Pérdida</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    )}
+                    {/* Podríamos poner un fallback aquí si sequenceData está vacío, pero no debería ocurrir si la lógica de inicio es correcta */}
+                 </AlertDialog>
 
             </div>
         </TooltipProvider>
