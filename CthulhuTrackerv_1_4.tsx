@@ -705,7 +705,7 @@ const CthulhuTracker = () => {
         setCurrentSanityLossInput(""); // Limpiar input para el primer jugador
         setIsSanityUpdateSequenceActive(true); // ¡Activar la secuencia!
         // Podríamos seleccionar al primer jugador aquí, pero lo haremos al mostrar el UI de secuencia
-        // setSelectedPlayer(updateSequence[0].playerKey);
+        setSelectedPlayer(updateSequence[0].playerKey);
         console.log(`Iniciando secuencia de actualización para ${updateSequence.length} jugadores.`);
     } else {
         console.log("No hay jugadores válidos para iniciar la secuencia de actualización.");
