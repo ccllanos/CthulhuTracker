@@ -635,6 +635,38 @@ const CthulhuTracker = () => {
         setIsGroupSanityModalOpen(true); // Abre el modal de entrada
         // Aún no activamos isGroupSanityCheckActive, eso será después de introducir datos
     };
+    
+    const handleProcessGroupSanityRolls = () => {
+        // 1. Validar inputs de pérdida SAN
+        if (!groupSanityLossSuccessInput.trim() || !groupSanityLossFailureInput.trim()) {
+            alert("Error: Debes especificar la pérdida de SAN para Éxito y Fallo.");
+            return;
+        }
+
+        // 2. Obtener jugadores activos
+        const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
+        if (activePlayerKeys.length === 0) {
+            alert("No hay investigadores activos para procesar.");
+            setIsGroupSanityModalOpen(false); // Cerrar modal aunque no haya jugadores
+            return;
+        }
+
+        // 3. Validar que todos los jugadores activos tengan una tirada
+        const missingRolls = activePlayerKeys.filter(key => !(key in groupSanityPlayerRolls) || groupSanityPlayerRolls[key].trim() === "");
+        if (missingRolls.length > 0) {
+            const missingNames = missingRolls.map(key => players[key]?.personaje || key).join(', ');
+            alert(`Error: Faltan las tiradas de D100 para: ${missingNames}`);
+            return;
+        }
+
+        // 4. (Próximamente) Validar que las tiradas sean números válidos (0-100)
+
+        // Si todo es válido: Iniciar el proceso
+        setIsGroupSanityModalOpen(false); // Cerrar el modal
+        setIsGroupSanityCheckActive(true); // Marcar que el proceso grupal ha comenzado
+        setCurrentGroupSanityPlayerIndex(0); // Empezar con el primer jugador activo
+        // console.log("Iniciando procesamiento grupal con:", { success: groupSanityLossSuccessInput, failure: groupSanityLossFailureInput, rolls: groupSanityPlayerRolls }); // Log para depuración
+    };
     // --- Textarea Handlers ---
     const handleSkillsTextChange = useCallback((playerKey: string, value: string) => {
          if (players[playerKey]?.statuses.muerto) return;
@@ -945,7 +977,7 @@ const CthulhuTracker = () => {
                              <AlertDialogCancel className="border-gray-600 hover:bg-gray-700">Cancelar</AlertDialogCancel>
                              <AlertDialogAction
                                 className="bg-purple-700 hover:bg-purple-600"
-                                onClick={() => { /* TODO: Procesar */ setIsGroupSanityModalOpen(false); }}
+                                onClick={handleProcessGroupSanityRolls} // Llamar a la nueva función
                              >
                                 Procesar Tiradas
                              </AlertDialogAction>
