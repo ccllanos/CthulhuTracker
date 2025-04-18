@@ -978,10 +978,30 @@ const CthulhuTracker = () => {
                                 Introduce la pérdida de SAN y los resultados de las tiradas.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
-                        {/* Inputs irán aquí en los próximos pasos */}
-                        <div className="my-4 space-y-4">
-                            {/* Placeholder para los inputs */}
-                            <p className="text-sm text-gray-400">(Aquí irán los inputs de pérdida y resultados)</p>
+                                                {/* Inputs de Pérdida SAN */}
+                                                <div className="my-4 space-y-3">
+                            <div>
+                                <Label htmlFor="sanity-loss-success" className="text-sm font-medium text-gray-400 block mb-1">Pérdida SAN (Éxito)</Label>
+                                <Input
+                                    id="sanity-loss-success"
+                                    value={sanityCheckSuccessLoss}
+                                    onChange={(e) => setSanityCheckSuccessLoss(e.target.value)}
+                                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="Ej: 0, 1, 1d2"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="sanity-loss-failure" className="text-sm font-medium text-gray-400 block mb-1">Pérdida SAN (Fallo)</Label>
+                                <Input
+                                    id="sanity-loss-failure"
+                                    value={sanityCheckFailureLoss}
+                                    onChange={(e) => setSanityCheckFailureLoss(e.target.value)}
+                                    className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="Ej: 1d4, 1d6, 5"
+                                />
+                            </div>
+                             {/* Placeholder para los inputs de resultados */}
+                             <p className="text-sm text-gray-400 pt-2 border-t border-gray-700 mt-3">(Aquí irán los inputs de resultados de dados)</p>
                         </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel className="border-gray-600 hover:bg-gray-700">Cancelar</AlertDialogCancel>
