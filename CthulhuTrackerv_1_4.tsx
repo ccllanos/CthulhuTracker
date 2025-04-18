@@ -731,9 +731,7 @@ const CthulhuTracker = () => {
             return;
         }
         try {
-        setIsConfirmingLoss(true);
-        let needsBoutOfMadness = false;
-        let boutMadnessType: 'locuraTemporal' | 'locuraIndefinida' | 'locuraSubyacente' | null = null; // Iniciar estado de carga
+        setIsConfirmingLoss(true); // Iniciar estado de carga
         const currentStep = sequenceData[currentSequenceIndex];
         const lossAmount = parseInt(currentSanityLossInput, 10);
 
@@ -762,53 +760,54 @@ const CthulhuTracker = () => {
                         const updatedPlayerData = JSON.parse(JSON.stringify(prevPlayers[playerKey]));
                         updatedPlayerData.stats.cordura = newSanity;
         
-                                                    // --- Inicio Lógica de Chequeos (Reestructurada) ---
-            let newPendingChecks = { ...updatedPlayerData.pendingChecks };
-            let newStatuses = { ...updatedPlayerData.statuses };
-            let sessionLoss = updatedPlayerData.sanityLostThisSession || 0;
-            const wasAlreadyInsane = newStatuses.locuraTemporal || newStatuses.locuraIndefinida || newStatuses.locuraSubyacente; // Estado ANTES de esta pérdida
-            const alertMessages: string[] = []; // Mover aquí para que sea local al callback
+                                        // --- Inicio Lógica de Chequeos (Incompleta) ---
+                let newPendingChecks = { ...updatedPlayerData.pendingChecks };
+                let newStatuses = { ...updatedPlayerData.statuses };
+                let sessionLoss = updatedPlayerData.sanityLostThisSession || 0;
+                let alertMessages: string[] = [];
 
-            if (isSessionActive && lossAmount > 0 && !newStatuses.muerto) {
-                sessionLoss += lossAmount; // Acumular pérdida de la sesión
-                updatedPlayerData.sanityLostThisSession = sessionLoss;
+                if (isSessionActive && lossAmount > 0 && !newStatuses.muerto) {
+                    sessionLoss += lossAmount; // Acumular pérdida de la sesión
+                    updatedPlayerData.sanityLostThisSession = sessionLoss;
 
-                // PRIORIDAD 1: Pérdida SAN durante Locura existente -> Nuevo Episodio
-                if (wasAlreadyInsane) {
-                    needsBoutOfMadness = true; // Marcar fuera del callback para llamar triggerBoutOfMadness después
-                    boutMadnessType = newStatuses.locuraIndefinida ? 'locuraIndefinida' : newStatuses.locuraTemporal ? 'locuraTemporal' : 'locuraSubyacente';
-                    alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): ¡NUEVO EPISODIO DE LOCURA! (Perdió ${lossAmount} SAN mientras estaba en estado de locura).`);
-                } else {
-                    // Si NO estaba loco, chequear si esta pérdida o la acumulación lo vuelven loco
+                    // 1. Chequeo Locura Temporal (pérdida >= 5)
+                    //    Solo si no está ya en Indefinida o Temporal.
+                    if (lossAmount >= 5 && !newStatuses.locuraIndefinida && !newStatuses.locuraTemporal) {
+                        if (newStatuses.locuraSubyacente) {
+                            // Si está en subyacente y pierde >= 5, ¿nuevo episodio o solo INT check?
+                            // Regla: Pérdida SAN mientras subyacente = Episodio. Lo manejaremos después.
+                            // Por ahora, marcaremos el check INT por si acaso.
+                            console.warn("Pérdida >= 5 SAN durante Locura Subyacente - Lógica de episodio directo pendiente.");
+                            // No marcamos INT check si está subyacente, debería ser episodio directo.
+                        } else {
+                             newPendingChecks.needsTempInsanityIntCheck = true;
+                             alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): Posible LOCURA TEMPORAL (Perdió ${lossAmount} SAN >= 5).\n- Realiza tirada de INT vs ${updatedPlayerData.stats.inteligencia}.`);
+                        }
+                    }
 
-                    // PRIORIDAD 2: Locura Indefinida (acumulación >= 1/5 SAN)
+                                        // 2. Chequeo Locura Indefinida (pérdida sesión >= 1/5 SAN inicial del evento)
                     const indefiniteThreshold = Math.floor(currentSanityActual / 5);
-                    if (sessionLoss >= indefiniteThreshold /* && !newStatuses.locuraIndefinida - Implícito por !wasAlreadyInsane */) {
+                    if (sessionLoss >= indefiniteThreshold && !newStatuses.locuraIndefinida) {
                         // Indefinida tiene prioridad sobre Temporal y Subyacente
-                        if (newStatuses.locuraTemporal) newStatuses.locuraTemporal = false; // Limpiar si existiera (no debería)
-                        if (newStatuses.locuraSubyacente) newStatuses.locuraSubyacente = false; // Limpiar si existiera (no debería)
-
+                        if (newStatuses.locuraTemporal) {
+                            newStatuses.locuraTemporal = false;
+                            newPendingChecks.needsTempInsanityIntCheck = false; // Anular check temporal
+                        }
+                        if (newStatuses.locuraSubyacente) {
+                            newStatuses.locuraSubyacente = false;
+                            // No hay pending check específico para subyacente
+                        }
                         newPendingChecks.needsIndefiniteInsanityConfirmation = true;
-                        newPendingChecks.needsTempInsanityIntCheck = false; // Indefinida anula check temporal
                         alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): ¡LOCURA INDEFINIDA DESENCADENADA! (Pérdida sesión: ${sessionLoss} >= ${indefiniteThreshold} (1/5 de ${currentSanityActual} SAN)).\n- Confirmar para activar estado y episodio.`);
+
+                        // Si se dispara Indefinida, no necesitamos el check de Temporal si también se cumplía
+                        newPendingChecks.needsTempInsanityIntCheck = false;
                     }
-                    // PRIORIDAD 3: Locura Temporal (pérdida individual >= 5)
-                    // Solo si no se activó Indefinida en este mismo paso
-                    else if (lossAmount >= 5 /* && !newStatuses.locuraIndefinida && !newStatuses.locuraTemporal - Implícito por !wasAlreadyInsane y chequeo anterior */) {
-                         newPendingChecks.needsTempInsanityIntCheck = true;
-                         alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): Posible LOCURA TEMPORAL (Perdió ${lossAmount} SAN >= 5).\n- Realiza tirada de INT vs ${updatedPlayerData.stats.inteligencia}.`);
-                    }
+                    // TODO: 3. Chequeo Episodio (pérdida SAN durante Locura existente)
                 }
-            }
 
-            // Mostrar alertas acumuladas (si las hubiera) - Mover fuera del setPlayers
-            // if (alertMessages.length > 0) {
-            //     setTimeout(() => alert(alertMessages.join('\n\n---\n')), 50);
-            // }
-
-            updatedPlayerData.pendingChecks = newPendingChecks;
-            updatedPlayerData.statuses = newStatuses; // Guardar posibles cambios en statuses (limpieza por Indefinida)
-            // --- Fin Lógica de Chequeos ---
+                updatedPlayerData.pendingChecks = newPendingChecks;
+                // --- Fin Lógica de Chequeos ---
                         // Por ahora, solo aplicamos la resta.
         
                         return {
