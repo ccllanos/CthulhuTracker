@@ -730,7 +730,18 @@ const CthulhuTracker = () => {
             return;
         }
 
-        console.log(`TODO: Procesar pérdida para jugador índice ${currentSequenceIndex}`);
+        const currentStep = sequenceData[currentSequenceIndex];
+        const lossAmount = parseInt(currentSanityLossInput, 10);
+
+        if (isNaN(lossAmount) || lossAmount < 0) {
+            alert(`Por favor, introduce una pérdida de cordura válida (número entero >= 0).`);
+            return; // No continuar si el input es inválido
+        }
+
+        console.log(`Procesando: ${currentStep.personaje} pierde ${lossAmount} SAN (Input: '${currentSanityLossInput}')`);
+        // TODO: Calcular nueva cordura y actualizar estado players
+        // TODO: Avanzar secuencia (índice o finalizar)
+        // TODO: Limpiar currentSanityLossInput
         // Aquí irá la lógica de validación, actualización y avance
     };
 
