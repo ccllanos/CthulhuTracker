@@ -1139,6 +1139,7 @@ const CthulhuTracker = () => {
                                    {isSkillsExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                </Button>
                                {isSkillsExpanded && (
+                                   <>                                
                                    <Textarea
                                         id={`skills-notes-${selectedPlayer}`}
                                         onPaste={handleSkillsPaste} // <<< Añadir manejador onPaste
@@ -1191,6 +1192,7 @@ const CthulhuTracker = () => {
                                         </div>
                                    </div>
                                    {/* --- Fin Sección Habilidades Estructuradas --- */}
+                                   </>
                                )}
                            </div>
                            {/* Collapsible Inventory Notes */}
