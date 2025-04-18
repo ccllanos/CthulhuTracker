@@ -1091,6 +1091,25 @@ const CthulhuTracker = () => {
                                        placeholder="Anota habilidades, valores, pega imágenes de ficha aquí..."
                                        disabled={currentPlayer.statuses.muerto}
                                    />
+                                   {/* --- Sección Habilidades Estructuradas --- */}
+                                   <div className="mt-4 pt-4 border-t border-gray-600">
+                                       <div className="flex justify-between items-center mb-2 px-1">
+                                            <h4 className="text-md font-semibold text-gray-300">Habilidades Estructuradas</h4>
+                                            {/* --- Controles de Ordenación --- */}
+                                            <div className="flex items-center gap-2 text-xs">
+                                                <span className='text-gray-400'>Ordenar:</span>
+                                                {/* Botón Nombre */}
+                                                <Button variant="ghost" size="sm" onClick={() => setSkillsSortOrder(prev => prev === 'name-asc' ? 'name-desc' : 'name-asc')} className={`h-6 px-1 ${skillsSortOrder.startsWith('name') ? 'text-red-400 font-semibold' : 'text-gray-400 hover:text-gray-100'}`}>Nombre {skillsSortOrder === 'name-asc' ? '▲' : skillsSortOrder === 'name-desc' ? '▼' : ''}</Button>
+                                                {/* Botón Valor */}
+                                                <Button variant="ghost" size="sm" onClick={() => setSkillsSortOrder(prev => prev === 'value-desc' ? 'value-asc' : 'value-desc')} className={`h-6 px-1 ${skillsSortOrder.startsWith('value') ? 'text-red-400 font-semibold' : 'text-gray-400 hover:text-gray-100'}`}>Valor {skillsSortOrder === 'value-desc' ? '▼' : skillsSortOrder === 'value-asc' ? '▲' : ''}</Button>
+                                            </div>
+                                       </div>
+                                       {/* --- Lista de Habilidades (Placeholder) --- */}
+                                       <div className='text-center text-gray-500 italic text-sm p-2'>
+                                            [Aquí se mostrará la lista ordenada de habilidades...]
+                                        </div>
+                                   </div>
+                                   {/* --- Fin Sección Habilidades Estructuradas --- */}
                                )}
                            </div>
                            {/* Collapsible Inventory Notes */}
