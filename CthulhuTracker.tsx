@@ -1141,7 +1141,7 @@ const CthulhuTracker = () => {
                             </div>
                             <AlertDialogFooter>
                                 {/* No hay Cancelar para forzar la secuencia */}
-                                <AlertDialogAction className="bg-yellow-700 hover:bg-yellow-600" onClick={() => console.log('TODO: Aplicar pérdida y pasar al siguiente')}>Confirmar Pérdida</AlertDialogAction>
+                                <AlertDialogAction className="bg-yellow-700 hover:bg-yellow-600" onClick={handleConfirmSanityLoss}>Confirmar Pérdida</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     )}
