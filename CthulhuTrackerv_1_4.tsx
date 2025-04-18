@@ -884,6 +884,35 @@ const CthulhuTracker = () => {
                          </AlertDialogFooter>
                      </AlertDialogContent>
                  </AlertDialog>
+                                  {/* Modal para Chequeo de Cordura Grupal */}
+                 <AlertDialog open={isGroupSanityModalOpen} onOpenChange={setIsGroupSanityModalOpen}>
+                    <AlertDialogContent className="bg-gray-800 text-gray-100 border-purple-700 max-w-lg">
+                         <AlertDialogHeader>
+                             <AlertDialogTitle className="text-purple-400 text-xl flex items-center gap-2">
+                                <BrainCircuit size={20}/> Chequeo de Cordura Grupal
+                             </AlertDialogTitle>
+                             <AlertDialogDescription className="text-gray-300 pt-2">
+                                Introduce la pérdida SAN y las tiradas de los investigadores activos.
+                             </AlertDialogDescription>
+                         </AlertDialogHeader>
+
+                         {/* --- Contenido del Modal (se rellenará en pasos siguientes) --- */}
+                         <div className="py-4 space-y-3">
+                            <p className='text-center text-gray-400 italic'>[Aquí irán los inputs...]</p>
+                         </div>
+                         {/* --- Fin Contenido del Modal --- */}
+
+                         <AlertDialogFooter>
+                             <AlertDialogCancel className="border-gray-600 hover:bg-gray-700">Cancelar</AlertDialogCancel>
+                             <AlertDialogAction
+                                className="bg-purple-700 hover:bg-purple-600"
+                                onClick={() => { /* TODO: Procesar */ setIsGroupSanityModalOpen(false); }}
+                             >
+                                Procesar Tiradas
+                             </AlertDialogAction>
+                         </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </TooltipProvider>
     );
