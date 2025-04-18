@@ -1175,7 +1175,7 @@ const CthulhuTracker = () => {
                                                 })
                                                 .map(([skillName, skillValue]) => ( // Mapear para renderizar
                                                     <div key={skillName} className="flex justify-between items-center py-0.5 border-b border-gray-700/50 group cursor-pointer hover:bg-gray-700/40 px-1 rounded-sm transition-colors duration-100"
-                                                         onClick={() => alert(`Chequeo para ${skillName} (${skillValue}) - PENDIENTE`)} // Placeholder onClick
+                                                         onClick={() => handleSkillCheck(skillName, skillValue)} // Llamar a la función de chequeo
                                                          title={`Clic para chequeo de ${skillName} (${skillValue})`}>
                                                         <span className="text-sm text-gray-200 group-hover:text-red-300 flex-1 truncate pr-2">
                                                             {skillName}
