@@ -240,36 +240,6 @@ const CthulhuTracker = () => {
         // Set flag after initial load logic is done
         initialLoadComplete.current = true;
     }, []); // Empty dependency array ensures this runs only once on mount
-
-    // Effect para pausar el chequeo grupal si es necesario DESPUÉS de actualizar el estado del jugador
-    useEffect(() => {
-        // Solo actuar si el chequeo está activo, NO pausado aún, y hay un jugador recién procesado
-        if (isGroupSanityCheckActive && !isGroupSanityPaused && lastProcessedGroupSanityPlayerKey) {
-            const player = players[lastProcessedGroupSanityPlayerKey];
-            if (!player) {
-                 console.error(`Error en useEffect de pausa: No se encontró el jugador con key ${lastProcessedGroupSanityPlayerKey}`);
-                 setLastProcessedGroupSanityPlayerKey(null); // Limpiar para evitar bucles
-                 return; // Seguridad
-            }
-
-            const requiresPause = player.pendingChecks.needsTempInsanityIntCheck ||
-                                  player.pendingChecks.needsIndefiniteInsanityConfirmation;
-
-            if (requiresPause) {
-                setIsGroupSanityPaused(true);
-                setGroupSanityPausedPlayerKey(lastProcessedGroupSanityPlayerKey);
-                // Limpiar el "último procesado" para que el efecto no se redisparare innecesariamente
-                setLastProcessedGroupSanityPlayerKey(null);
-                // Usar setTimeout para que la alerta aparezca después de la renderización del estado pausado
-                setTimeout(() => alert(`¡PAUSA! El chequeo grupal se detiene.\n\nInvestigador: ${player.personaje}\nAcción Requerida: Resuelve el chequeo pendiente de Locura (Temporal o Indefinida) en su ficha.\n\nLuego pulsa "Reanudar Chequeo".`), 50);
-                 // NO avanzamos al siguiente jugador aquí, la pausa detiene el flujo que ya ocurrió (o estaba por ocurrir)
-            } else {
-                 // Si no requiere pausa, simplemente limpiamos la marca para la siguiente iteración
-                 // Esto es importante para que el efecto no se active de nuevo si 'players' cambia por otra razón
-                 setLastProcessedGroupSanityPlayerKey(null);
-            }
-        }
-    }, [players, isGroupSanityCheckActive, isGroupSanityPaused, lastProcessedGroupSanityPlayerKey]); // Dependencias clave
     const addDefaultPlayers = () => {
         const defaultPlayersData = Array.from({ length: 5 }, (_, i) => i + 1).reduce(
             (acc, num) => {
@@ -791,10 +761,22 @@ const CthulhuTracker = () => {
         } // Fin if (delta > 0)
 
         // 4. Limpiar input actual y avanzar
-        // *** NUEVO: Marcar este jugador como el último procesado para el useEffect ***
-        setLastProcessedGroupSanityPlayerKey(playerKey);
+        // *** NUEVO: Verificar si hay locura pendiente y pausar si es necesario ***
+        const currentPlayerStateAfterUpdate = players[playerKey]; // Obtener el estado MÁS RECIENTE
+        const requiresPause = currentPlayerStateAfterUpdate &&
+                              (currentPlayerStateAfterUpdate.pendingChecks.needsTempInsanityIntCheck ||
+                               currentPlayerStateAfterUpdate.pendingChecks.needsIndefiniteInsanityConfirmation);
 
-        // --- Lógica de avance ---
+        if (requiresPause) {
+            setIsGroupSanityPaused(true);
+            setGroupSanityPausedPlayerKey(playerKey);
+            setCurrentGroupSanityLossInput(""); // Limpiar input igual
+            // Mostrar alerta modal o un mensaje prominente sería ideal aquí, pero por ahora usamos alert simple.
+            setTimeout(() => alert(`¡PAUSA! El chequeo grupal se detiene.\n\nInvestigador: ${currentPlayerStateAfterUpdate.personaje}\nAcción Requerida: Resuelve el chequeo pendiente de Locura (Temporal o Indefinida) en su ficha.\n\nLuego pulsa "Reanudar Chequeo".`), 50);
+            return; // Detener la ejecución aquí, no avanzar al siguiente
+        }
+
+        // --- Lógica de avance (solo se ejecuta si no hay pausa) ---
         setCurrentGroupSanityLossInput(""); // Resetear input para el siguiente
         const nextIndex = currentGroupSanityPlayerIndex + 1;
 
@@ -811,7 +793,55 @@ const CthulhuTracker = () => {
             alert("Chequeo de Cordura Grupal Completado.");
         }
     };
-    
+
+    const handleResumeGroupSanityCheck = () => {
+        if (!isGroupSanityPaused || !groupSanityPausedPlayerKey || currentGroupSanityPlayerIndex === null) {
+             console.warn("Intento de reanudar sin estar pausado correctamente.");
+             return; // No estaba pausado o faltan datos
+        }
+
+        const playerKey = groupSanityPausedPlayerKey;
+        const player = players[playerKey];
+
+        if (!player) {
+             console.error("Error: Jugador que causó la pausa no encontrado al reanudar.");
+             setIsGroupSanityCheckActive(false); // Abortar por seguridad
+             setIsGroupSanityPaused(false);
+             setGroupSanityPausedPlayerKey(null);
+             setCurrentGroupSanityPlayerIndex(null);
+             return;
+        }
+
+        // Verificar si la condición de pausa (locura pendiente) AÚN existe
+        const stillRequiresPause = player.pendingChecks.needsTempInsanityIntCheck ||
+                                   player.pendingChecks.needsIndefiniteInsanityConfirmation;
+
+        if (stillRequiresPause) {
+             alert(`Error: Aún existe un chequeo de Locura pendiente para ${player.personaje}.\nResuélvelo en su ficha antes de continuar.`);
+             return; // No reanudar hasta que se resuelva
+        }
+
+        // Si la condición de pausa ya NO existe, reanudar
+        setIsGroupSanityPaused(false);
+        setGroupSanityPausedPlayerKey(null);
+        alert(`Reanudando chequeo grupal...`);
+
+        // Replicar la lógica de avance desde handleConfirmGroupSanityLoss
+        const activePlayerKeys = Object.keys(players).filter(key => !players[key].statuses.muerto);
+        const nextIndex = currentGroupSanityPlayerIndex + 1; // Índice del jugador *después* del que pausó
+
+        if (nextIndex < activePlayerKeys.length) {
+            const nextPlayerKey = activePlayerKeys[nextIndex];
+            setCurrentGroupSanityPlayerIndex(nextIndex);
+            setSelectedPlayer(nextPlayerKey); // Seleccionar al siguiente en la vista principal
+        } else {
+            // Era el último jugador, finalizar
+            setIsGroupSanityCheckActive(false);
+            setCurrentGroupSanityPlayerIndex(null);
+            setGroupSanityPlayerRolls({});
+            alert("Chequeo de Cordura Grupal Completado.");
+        }
+    };    
     // --- Textarea Handlers ---
     const handleSkillsTextChange = useCallback((playerKey: string, value: string) => {
          if (players[playerKey]?.statuses.muerto) return;
