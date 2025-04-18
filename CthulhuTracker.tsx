@@ -1041,7 +1041,7 @@ const CthulhuTracker = () => {
                         </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel className="border-gray-600 hover:bg-gray-700">Cancelar</AlertDialogCancel>
-                            <AlertDialogAction className="bg-blue-700 hover:bg-blue-600" onClick={() => console.log('TODO: Procesar Inputs')}>Siguiente</AlertDialogAction> {/* Acción Placeholder */}
+                            <AlertDialogAction className="bg-blue-700 hover:bg-blue-600" onClick={handleProcessSanityCheckInputs}>Siguiente</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                  </AlertDialog>
