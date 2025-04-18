@@ -879,6 +879,7 @@ const CthulhuTracker = () => {
 
                             return (
                                 <div className="text-center space-y-3">
+                                    {/* --- Mostrar información del jugador siempre --- */}
                                     <p className="text-lg font-medium text-gray-200">{playerData.personaje}</p>
                                     <p className="text-sm text-gray-400">
                                         Tirada SAN: <span className="font-bold text-gray-100">{groupSanityPlayerRolls[playerKey]}</span> vs <span className="font-bold text-gray-100">{targetSanity}</span>
@@ -889,26 +890,42 @@ const CthulhuTracker = () => {
                                     <p className="text-md text-gray-300">
                                         Pérdida de Cordura: <span className="font-semibold text-yellow-400">{lossDescription}</span>
                                     </p>
-                                    <div className="flex justify-center items-center gap-2 pt-2">
-                                        <Label htmlFor="currentSanLoss" className="text-sm text-gray-400">Introduce pérdida:</Label>
-                                        <Input
-                                            id="currentSanLoss"
-                                            type="text"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            value={currentGroupSanityLossInput}
-                                            onChange={(e) => setCurrentGroupSanityLossInput(e.target.value.replace(/[^0-9]/g, ''))}
-                                            className="bg-gray-800 border-gray-600 h-8 w-20 text-center focus:border-purple-500 focus:ring-purple-500"
-                                            placeholder="#"
-                                            autoFocus // Enfocar automáticamente este input
-                                        />
-                                        <Button
-                                            onClick={handleConfirmGroupSanityLoss}
-                                            className="bg-purple-600 hover:bg-purple-500 h-8 px-3 text-sm"
-                                        >
-                                            Confirmar y Siguiente
-                                        </Button>
-                                    </div>
+
+                                    {/* --- Sección Condicional: Pausado vs Activo --- */}
+                                    {isGroupSanityPaused && groupSanityPausedPlayerKey === playerKey ? (
+                                        // Estado Pausado
+                                        <div className="mt-3 pt-3 border-t border-yellow-600/50 space-y-2">
+                                            <p className="text-yellow-400 font-semibold text-lg flex items-center justify-center gap-2">
+                                                <AlertTriangle size={18} /> ¡PAUSADO!
+                                            </p>
+                                            <p className="text-sm text-yellow-200">
+                                                Resuelve el chequeo de locura pendiente para <span className="font-bold">{playerData.personaje}</span> en su ficha.
+                                            </p>
+                                            <Button
+                                                onClick={() => { /* TODO: Reanudar chequeo */ alert("Reanudando..."); }} // Placeholder
+                                                className="bg-yellow-600 hover:bg-yellow-500 text-black h-8 px-3 text-sm mt-2"
+                                                size="sm"
+                                            >
+                                                Reanudar Chequeo
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        // Estado Activo (Input + Botón Confirmar)
+                                        <div className="flex justify-center items-center gap-2 pt-2">
+                                            <Label htmlFor="currentSanLoss" className="text-sm text-gray-400">Introduce pérdida:</Label>
+                                            <Input
+                                                id="currentSanLoss"
+                                                type="text" inputMode="numeric" pattern="[0-9]*"
+                                                value={currentGroupSanityLossInput}
+                                                onChange={(e) => setCurrentGroupSanityLossInput(e.target.value.replace(/[^0-9]/g, ''))}
+                                                className="bg-gray-800 border-gray-600 h-8 w-20 text-center focus:border-purple-500 focus:ring-purple-500"
+                                                placeholder="#" autoFocus
+                                            />
+                                            <Button onClick={handleConfirmGroupSanityLoss} className="bg-purple-600 hover:bg-purple-500 h-8 px-3 text-sm">
+                                                Confirmar y Siguiente
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                          })()}
