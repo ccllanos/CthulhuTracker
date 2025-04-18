@@ -731,7 +731,9 @@ const CthulhuTracker = () => {
             return;
         }
         try {
-        setIsConfirmingLoss(true); // Iniciar estado de carga
+        setIsConfirmingLoss(true);
+        let needsBoutOfMadness = false;
+        let boutMadnessType: 'locuraTemporal' | 'locuraIndefinida' | 'locuraSubyacente' | null = null; // Iniciar estado de carga
         const currentStep = sequenceData[currentSequenceIndex];
         const lossAmount = parseInt(currentSanityLossInput, 10);
 
