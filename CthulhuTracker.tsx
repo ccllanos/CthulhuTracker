@@ -738,7 +738,20 @@ const CthulhuTracker = () => {
             return; // No continuar si el input es inválido
         }
 
-        console.log(`Procesando: ${currentStep.personaje} pierde ${lossAmount} SAN (Input: '${currentSanityLossInput}')`);
+        console.log(`Procesando: ${currentStep.personaje} pierde ${lossAmount} SAN (Input: '${currentSanityLossInput}')`)
+        const playerKey = currentStep.playerKey;
+        const playerData = players[playerKey]; // Obtener datos actuales del jugador
+
+        if (!playerData) {
+            console.error(`Error: No se encontraron datos para el jugador ${playerKey} durante la actualización.`);
+            setIsSanityUpdateSequenceActive(false); // Detener secuencia por seguridad
+            return;
+        }
+
+        const currentSanityActual = playerData.stats.cordura; // Cordura antes de esta pérdida
+        const newSanity = Math.max(0, currentSanityActual - lossAmount); // Calcular nueva cordura (mínimo 0)
+
+        console.log(`   Cordura: ${currentSanityActual} -> ${newSanity} (Perdió ${lossAmount})`);
         // TODO: Calcular nueva cordura y actualizar estado players
         // TODO: Avanzar secuencia (índice o finalizar)
         // TODO: Limpiar currentSanityLossInput
