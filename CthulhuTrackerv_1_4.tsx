@@ -1262,23 +1262,25 @@ const CthulhuTracker = () => {
                                          </>
                                      )}
                                      </div>
-                            <AlertDialogFooter>
-                                {/* No hay Cancelar para forzar la secuencia */}
-                                <AlertDialogAction
-                                    className={cn("bg-yellow-700 hover:bg-yellow-600 flex items-center justify-center gap-2", isConfirmingLoss && "opacity-75 cursor-not-allowed")}
-                                    onClick={handleConfirmSanityLoss}
-                                    disabled={isConfirmingLoss} // Deshabilitar mientras se confirma
-                                >
-                                    {isConfirmingLoss ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            Procesando...
-                                        </>
-                                    ) : (
-                                        "Confirmar Pérdida"
-                                    )}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
+                                                                     <AlertDialogFooter>
+                                                                     {episodeInfo ? (
+                                                                         // Botón para continuar después del episodio
+                                                                         <AlertDialogAction className="bg-green-700 hover:bg-green-600" onClick={() => console.log('TODO: Crear handleContinueSequenceAfterEpisode')}>
+                                                                             Episodio Anotado / Continuar
+                                                                         </AlertDialogAction>
+                                                                     ) : (
+                                                                         // Botón para confirmar pérdida (como antes)
+                                                                         <AlertDialogAction
+                                                                             className={cn("bg-yellow-700 hover:bg-yellow-600 flex items-center justify-center gap-2", isConfirmingLoss && "opacity-75 cursor-not-allowed")}
+                                                                             onClick={handleConfirmSanityLoss}
+                                                                             disabled={isConfirmingLoss}
+                                                                         >
+                                                                             {isConfirmingLoss ? (
+                                                                                 <><Loader2 className="h-4 w-4 animate-spin" /> Procesando...</>
+                                                                             ) : ( "Confirmar Pérdida" )}
+                                                                         </AlertDialogAction>
+                                                                     )}
+                                                                 </AlertDialogFooter>
                         </AlertDialogContent>
                     )}
                     {/* Podríamos poner un fallback aquí si sequenceData está vacío, pero no debería ocurrir si la lógica de inicio es correcta */}
