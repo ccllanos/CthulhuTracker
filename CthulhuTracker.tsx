@@ -652,6 +652,21 @@ const CthulhuTracker = () => {
         setIsBoutOfMadnessAlertOpen(true);
      };
 
+     const handleProcessSanityCheckInputs = () => {
+        console.log("Procesando Chequeo de Cordura:");
+        console.log("Pérdida Éxito:", sanityCheckSuccessLoss);
+        console.log("Pérdida Fallo:", sanityCheckFailureLoss);
+        console.log("Resultados Tiradas:", sanityCheckRolls);
+
+        // TODO: Implementar lógica de comparación y secuencia de actualización
+
+        setIsSanityCheckModalOpen(false); // Cerrar el modal
+        // Opcional: Resetear inputs aquí o al reabrir? Por ahora, no reseteamos.
+        // setSanityCheckSuccessLoss("");
+        // setSanityCheckFailureLoss("");
+        // setSanityCheckRolls({});
+    };
+
     // --- Corrected Session Toggle Logic ---
     const handleToggleSession = () => {
         setIsSessionActive(prev => !prev); // Just toggle the state
@@ -1001,8 +1016,28 @@ const CthulhuTracker = () => {
                                     placeholder="Ej: 1d4, 1d6, 5"
                                 />
                             </div>
-                             {/* Placeholder para los inputs de resultados */}
-                             <p className="text-sm text-gray-400 pt-2 border-t border-gray-700 mt-3">(Aquí irán los inputs de resultados de dados)</p>
+                                                         {/* Inputs de Resultados (d100) */}
+                            <div className="pt-3 border-t border-gray-700 mt-3 space-y-2 max-h-60 overflow-y-auto pr-2">
+                                <h4 className="text-sm font-medium text-gray-300 mb-2">Resultados Tirada d100 (vs Cordura):</h4>
+                                {Object.entries(players)
+                                    .filter(([key, player]) => !player.statuses.muerto) // Filtrar jugadores no muertos
+                                    .map(([playerKey, player]) => (
+                                    <div key={playerKey} className="flex items-center justify-between space-x-2">
+                                        <Label htmlFor={`roll-${playerKey}`} className="text-sm text-gray-400 whitespace-nowrap">
+                                            {player.personaje}:
+                                        </Label>
+                                        <Input
+                                            id={`roll-${playerKey}`}
+                                            type="number" // Sugerencia de tipo numérico
+                                            min="1" max="100" // Validación básica
+                                            value={sanityCheckRolls[playerKey] ?? ''} // Mostrar valor o vacío
+                                            onChange={(e) => setSanityCheckRolls(prev => ({ ...prev, [playerKey]: e.target.value }))}
+                                            className="bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 w-24 h-8 text-center"
+                                            placeholder="1-100"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel className="border-gray-600 hover:bg-gray-700">Cancelar</AlertDialogCancel>
