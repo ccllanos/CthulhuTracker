@@ -829,123 +829,16 @@ const CthulhuTracker = () => {
                     };
                 }); // Fin de setPlayers
 
-            const advanceOrEndSequence = (currentPlayerKey: string) => {
-        // Lógica movida desde handleConfirmSanityLoss
-         setCurrentSanityLossInput(""); // Limpiar input para la próxima
 
-         if (currentSequenceIndex >= sequenceData.length - 1) {
-             // Era el último jugador
-             console.log("Secuencia de actualización de cordura completada.");
-             setIsSanityUpdateSequenceActive(false);
-             setCurrentSequenceIndex(0);
-             setSequenceData([]);
-             setSelectedPlayer(currentPlayerKey); // Usar la key pasada como argumento
-         } else {
-             // Pasar al siguiente jugador
-             const nextIndex = currentSequenceIndex + 1;
-             console.log(`Avanzando al siguiente jugador: ${sequenceData[nextIndex].personaje} (Índice ${nextIndex})`);
-             setCurrentSequenceIndex(nextIndex);
-             setSelectedPlayer(sequenceData[nextIndex].playerKey);
-         }
-    };
-
-        // Handler para confirmar que se ha visto el episodio y continuar
-        const handleAcknowledgePause = () => {
-            if (!currentSequencePauseReason || currentSequencePauseReason.type !== 'episode') return;
-    
-            const playerKeyHandled = currentSequencePauseReason.playerKey;
-            console.log(`Continuando secuencia después del episodio de ${playerKeyHandled}.`);
-            setCurrentSequencePauseReason(null); // Limpiar estado de pausa
-            advanceOrEndSequence(playerKeyHandled); // Avanzar/finalizar
-        };
-
-            // Handler para resolver el chequeo INT de locura temporal
-    const handleResolveTempIntCheck = (passedIntCheck: boolean) => {
-        if (!currentSequencePauseReason || currentSequencePauseReason.type !== 'temp_int_check') return;
-
-        const playerKey = currentSequencePauseReason.playerKey;
-        const intelligence = currentSequencePauseReason.data.intelligence; // Recuperar INT
-        console.log(`Resolviendo chequeo INT para ${playerKey}. Resultado: ${passedIntCheck ? 'Superada (Loco)' : 'Fallada (Reprimida)'}`);
-
-        let boutTextForGlobalAlert: string | undefined = undefined;
-
-        // Actualizar estado del jugador
-        setPlayers(prev => {
-             const updatedPlayerData = JSON.parse(JSON.stringify(prev[playerKey]));
-             updatedPlayerData.pendingChecks.needsTempInsanityIntCheck = false; // Limpiar check
-             if (passedIntCheck) {
-                 // Superó INT -> Locura Temporal activada
-                 updatedPlayerData.statuses.locuraTemporal = true;
-                 updatedPlayerData.statuses.locuraIndefinida = false; // Asegurar exclusividad
-                 updatedPlayerData.statuses.locuraSubyacente = false;
-                 // Disparar episodio asociado a la activación de Locura Temporal
-                  boutTextForGlobalAlert = triggerBoutOfMadness(playerKey, 'locuraTemporal');
-             } else {
-                 // Falló INT -> Reprimida, no hay cambio de estado de locura
-                 // (El check ya se limpió)
-             }
-             return { ...prev, [playerKey]: updatedPlayerData };
-        });
-
-        if (boutTextForGlobalAlert) {
-             // Mostrar episodio en el alert global ya que la secuencia continúa
-             setBoutOfMadnessResult(boutTextForGlobalAlert);
-             setIsBoutOfMadnessAlertOpen(true);
-        }
-
-        setCurrentSequencePauseReason(null); // Limpiar estado de pausa
-        advanceOrEndSequence(playerKey); // Avanzar/finalizar
-    };
-
-        // Handler para confirmar la locura indefinida
-        const handleResolveIndefConfirm = () => {
-            if (!currentSequencePauseReason || currentSequencePauseReason.type !== 'indef_confirm') return;
-   
-            const playerKey = currentSequencePauseReason.playerKey;
-            console.log(`Confirmando Locura Indefinida para ${playerKey}.`);
-   
-            let boutTextForNextPause: string | undefined = undefined;
-   
-            // Actualizar estado del jugador
-            setPlayers(prev => {
-                const updatedPlayerData = JSON.parse(JSON.stringify(prev[playerKey]));
-                updatedPlayerData.pendingChecks.needsIndefiniteInsanityConfirmation = false; // Limpiar check
-                // Activar Locura Indefinida y limpiar otras
-                updatedPlayerData.statuses.locuraIndefinida = true;
-                updatedPlayerData.statuses.locuraTemporal = false;
-                updatedPlayerData.statuses.locuraSubyacente = false;
-                // Limpiar checks relacionados por si acaso
-                updatedPlayerData.pendingChecks.needsTempInsanityIntCheck = false;
-                updatedPlayerData.pendingChecks.needsSubyacenteConfirmation = false;
-   
-                // Disparar episodio asociado a la activación de Locura Indefinida
-                boutTextForNextPause = triggerBoutOfMadness(playerKey, 'locuraIndefinida');
-   
-                return { ...prev, [playerKey]: updatedPlayerData };
-            });
-   
-           if (boutTextForNextPause) {
-               // Cambiar el estado de pausa para mostrar el episodio recién generado
-               setCurrentSequencePauseReason({ type: 'episode', data: { boutText: boutTextForNextPause }, playerKey });
-               console.log(`   Nuevo estado de pausa: Mostrar episodio para ${playerKey}.`);
-           } else {
-                // Si triggerBoutOfMadness falla (no debería), continuar por seguridad
-                console.warn("No se pudo generar el texto del episodio para Locura Indefinida, continuando secuencia.");
-                setCurrentSequencePauseReason(null);
-                advanceOrEndSequence(playerKey);
-           }
-            // NO se llama a advanceOrEndSequence aquí directamente, se pasa a la pausa de 'episode'.
-       };
-
-    
-        // TODO: Limpiar currentSanityLossInput
-        // Aquí irá la lógica de validación, actualización y avance
-    };
 
     // --- Corrected Session Toggle Logic ---
     const handleToggleSession = () => {
         setIsSessionActive(prev => !prev); // Just toggle the state
     };
+
+    
+
+
 
     // Effect to react to session state change
     useEffect(() => {
