@@ -858,6 +858,79 @@ const CthulhuTracker = () => {
          }));
          debouncedUpdatePlayerField(playerKey, `trasfondo.${trasfondoKey}`, value);
      }, [players, debouncedUpdatePlayerField]);
+
+     const handleSkillsPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        if (!selectedPlayer || !players[selectedPlayer] || players[selectedPlayer].statuses.muerto) return;
+        event.preventDefault(); // Prevenir el pegado por defecto en el textarea
+
+        const pastedText = event.clipboardData.getData('text');
+        const lines = pastedText.trim().split('\n');
+        const potentialSkills: Record<string, number> = {};
+        let parseSuccess = true;
+        let skillsFound = 0;
+
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return; // Ignorar líneas vacías
+
+            const parts = trimmedLine.split(':');
+            if (parts.length === 2) {
+                const skillName = parts[0].trim();
+                const skillValueStr = parts[1].trim();
+                const skillValue = parseInt(skillValueStr, 10);
+
+                if (skillName && !isNaN(skillValue) && skillValue >= 0 && skillValue <= 100) { // Validación básica
+                    potentialSkills[skillName] = skillValue;
+                    skillsFound++;
+                } else {
+                    parseSuccess = false; // Formato inválido encontrado
+                }
+            } else {
+                parseSuccess = false; // Formato inválido encontrado
+            }
+        });
+
+        if (skillsFound > 0 && parseSuccess) {
+             // Confirmación antes de reemplazar
+             if (window.confirm(`Se detectaron ${skillsFound} habilidades en el formato correcto (nombre: valor).\n\n¿Deseas REEMPLAZAR las habilidades estructuradas actuales de ${players[selectedPlayer].personaje} con estas?\n\n(El contenido actual del área de texto también se borrará).`)) {
+                 setPlayers(prev => ({
+                     ...prev,
+                     [selectedPlayer]: {
+                         ...prev[selectedPlayer],
+                         skills: potentialSkills, // Reemplazar skills estructuradas
+                         skillsNotes: "" // Borrar el área de notas
+                     }
+                 }));
+                 // Actualizar el estado local del textarea inmediatamente
+                 setSkillsText(prev => ({ ...prev, [selectedPlayer]: "" }));
+                 alert("Habilidades estructuradas actualizadas.");
+             } else {
+                  // Si el usuario cancela, pegar el texto normalmente en el textarea
+                 const textarea = event.currentTarget;
+                 const start = textarea.selectionStart;
+                 const end = textarea.selectionEnd;
+                 const currentText = textarea.value;
+                 const newText = currentText.substring(0, start) + pastedText + currentText.substring(end);
+                 handleSkillsTextChange(selectedPlayer, newText); // Usar el handler existente para actualizar estado y debounce
+                 // Mover cursor al final del texto pegado
+                 setTimeout(() => { textarea.selectionStart = textarea.selectionEnd = start + pastedText.length; }, 0);
+
+             }
+        } else {
+             // Si no se detectó formato válido o hubo errores, pegar normalmente
+             const textarea = event.currentTarget;
+             const start = textarea.selectionStart;
+             const end = textarea.selectionEnd;
+             const currentText = textarea.value;
+             const newText = currentText.substring(0, start) + pastedText + currentText.substring(end);
+             handleSkillsTextChange(selectedPlayer, newText); // Usar el handler existente
+             setTimeout(() => { textarea.selectionStart = textarea.selectionEnd = start + pastedText.length; }, 0);
+             if (skillsFound > 0 && !parseSuccess) {
+                 alert("Se detectó texto con formato 'nombre: valor', pero algunas líneas tenían errores o valores inválidos (0-100). El texto se ha pegado normalmente.");
+             }
+             // Si no se encontraron skills, no mostrar alerta.
+        }
+    };
     // --- Render ---
     const currentPlayer = selectedPlayer ? players[selectedPlayer] : null;
     const orderedStatNames = Object.keys(initialStats);
@@ -1004,12 +1077,13 @@ const CthulhuTracker = () => {
                                    className="w-full flex justify-between items-center text-lg font-semibold text-gray-300 hover:bg-gray-700/50 px-3 py-2"
                                    disabled={currentPlayer.statuses.muerto}
                                >
-                                   <span className="flex items-center gap-2"><BrainCircuit size={18}/> Habilidades (Notas)</span>
+                                   <span className="flex items-center gap-2"><BrainCircuit size={18}/> Habilidades (Notas / Prototipo / Imagen)</span>
                                    {isSkillsExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                </Button>
                                {isSkillsExpanded && (
                                    <Textarea
-                                       id={`skills-notes-${selectedPlayer}`}
+                                        id={`skills-notes-${selectedPlayer}`}
+                                        onPaste={handleSkillsPaste} // <<< Añadir manejador onPaste
                                        value={skillsText[selectedPlayer] ?? ''}
                                        onChange={(e) => handleSkillsTextChange(selectedPlayer, e.target.value)}
                                        className={cn("mt-2 bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-red-500 focus:ring-red-500 min-h-[150px] w-full", currentPlayer.statuses.muerto && "bg-gray-700 text-gray-500 cursor-not-allowed")}
