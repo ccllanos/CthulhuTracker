@@ -176,6 +176,7 @@ const CthulhuTracker = () => {
     const [isSanityCheckModalOpen, setIsSanityCheckModalOpen] = useState<boolean>(false);
     const [sanityCheckSuccessLoss, setSanityCheckSuccessLoss] = useState<string>("");
     const [sanityCheckFailureLoss, setSanityCheckFailureLoss] = useState<string>("");
+    const [sanityCheckRolls, setSanityCheckRolls] = useState<Record<string, string>>({});
     const isProcessingBlur = useRef<Record<string, boolean>>({});
     const initialLoadComplete = useRef<boolean>(false); // Ref to track initial load
 
