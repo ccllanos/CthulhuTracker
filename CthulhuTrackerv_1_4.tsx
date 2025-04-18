@@ -760,7 +760,37 @@ const CthulhuTracker = () => {
                         const updatedPlayerData = JSON.parse(JSON.stringify(prevPlayers[playerKey]));
                         updatedPlayerData.stats.cordura = newSanity;
         
-                        // TODO: Aquí iría la lógica compleja de checkeos (locura, etc.) basados en 'lossAmount' y 'newSanity'
+                                        // --- Inicio Lógica de Chequeos (Incompleta) ---
+                let newPendingChecks = { ...updatedPlayerData.pendingChecks };
+                let newStatuses = { ...updatedPlayerData.statuses };
+                let sessionLoss = updatedPlayerData.sanityLostThisSession || 0;
+                let alertMessages: string[] = [];
+
+                if (isSessionActive && lossAmount > 0 && !newStatuses.muerto) {
+                    sessionLoss += lossAmount; // Acumular pérdida de la sesión
+                    updatedPlayerData.sanityLostThisSession = sessionLoss;
+
+                    // 1. Chequeo Locura Temporal (pérdida >= 5)
+                    //    Solo si no está ya en Indefinida o Temporal.
+                    if (lossAmount >= 5 && !newStatuses.locuraIndefinida && !newStatuses.locuraTemporal) {
+                        if (newStatuses.locuraSubyacente) {
+                            // Si está en subyacente y pierde >= 5, ¿nuevo episodio o solo INT check?
+                            // Regla: Pérdida SAN mientras subyacente = Episodio. Lo manejaremos después.
+                            // Por ahora, marcaremos el check INT por si acaso.
+                            console.warn("Pérdida >= 5 SAN durante Locura Subyacente - Lógica de episodio directo pendiente.");
+                            // No marcamos INT check si está subyacente, debería ser episodio directo.
+                        } else {
+                             newPendingChecks.needsTempInsanityIntCheck = true;
+                             alertMessages.push(`ALERTA (${updatedPlayerData.personaje}): Posible LOCURA TEMPORAL (Perdió ${lossAmount} SAN >= 5).\n- Realiza tirada de INT vs ${updatedPlayerData.stats.inteligencia}.`);
+                        }
+                    }
+
+                    // TODO: 2. Chequeo Locura Indefinida (pérdida sesión >= 1/5 SAN inicial)
+                    // TODO: 3. Chequeo Episodio (pérdida SAN durante Locura existente)
+                }
+
+                updatedPlayerData.pendingChecks = newPendingChecks;
+                // --- Fin Lógica de Chequeos ---
                         // Por ahora, solo aplicamos la resta.
         
                         return {
