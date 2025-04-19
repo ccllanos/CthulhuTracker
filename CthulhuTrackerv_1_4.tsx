@@ -972,12 +972,16 @@ const CthulhuTracker = () => {
     };
 
      const handleSkillCheck = (skillName: string, skillValue: number) => {
+        console.log("Checking player status before prompt. Current player:", currentPlayer?.personaje, "Dead:", currentPlayer?.statuses?.muerto); // LOG A
         if (currentPlayer?.statuses.muerto) {
             alert(`${currentPlayer.personaje} está muerto y no puede realizar chequeos.`);
+            console.log("Check aborted: Player is dead."); // LOG B
             return;
         }
 
+        console.log("Attempting to show prompt..."); // LOG C
         const rollInput = prompt(`Chequeo de ${skillName} (${skillValue}%)\n\nIntroduce el resultado del D100:`);
+        console.log("Prompt returned:", rollInput); // LOG D
 
         if (rollInput === null) return; // El usuario canceló el prompt
 
